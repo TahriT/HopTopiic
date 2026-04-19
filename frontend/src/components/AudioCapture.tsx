@@ -3,6 +3,7 @@ import { useEffect, useRef, useCallback } from "react";
 interface AudioCaptureProps {
   onAudioData: (pcm: ArrayBuffer) => void;
   active: boolean;
+  onError?: (msg: string) => void;
 }
 
 const SAMPLE_RATE = 16000;
@@ -34,7 +35,7 @@ class PCMProcessor extends AudioWorkletProcessor {
 registerProcessor('pcm-processor', PCMProcessor);
 `;
 
-export function AudioCapture({ onAudioData, active }: AudioCaptureProps) {
+export function AudioCapture({ onAudioData, active, onError }: AudioCaptureProps) {
   const streamRef = useRef<MediaStream | null>(null);
   const contextRef = useRef<AudioContext | null>(null);
   const workletRef = useRef<AudioWorkletNode | null>(null);
@@ -55,6 +56,23 @@ export function AudioCapture({ onAudioData, active }: AudioCaptureProps) {
     // Prevent double-start
     if (contextRef.current) return;
     const gen = ++generation.current;
+
+    // Check secure context — getUserMedia requires HTTPS or localhost
+    if (!window.isSecureContext) {
+      const msg =
+        "Microphone blocked: this page must be served over HTTPS. " +
+        "Access via https:// or use localhost.";
+      console.error("[AudioCapture]", msg);
+      onError?.(msg);
+      return;
+    }
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      const msg = "Microphone not available in this browser.";
+      console.error("[AudioCapture]", msg);
+      onError?.(msg);
+      return;
+    }
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -102,10 +120,20 @@ export function AudioCapture({ onAudioData, active }: AudioCaptureProps) {
 
       source.connect(workletNode);
       workletNode.connect(ctx.destination); // needed to keep processing alive
-    } catch (err) {
-      console.error("[AudioCapture] Failed to start:", err);
+    } catch (err: any) {
+      const name = err?.name ?? "";
+      let msg: string;
+      if (name === "NotAllowedError") {
+        msg = "Microphone permission denied. Check browser site settings.";
+      } else if (name === "NotFoundError") {
+        msg = "No microphone found on this device.";
+      } else {
+        msg = `Microphone error: ${err?.message ?? "unknown"}`;
+      }
+      console.error("[AudioCapture]", msg, err);
+      onError?.(msg);
     }
-  }, [onAudioData]);
+  }, [onAudioData, onError]);
 
   useEffect(() => {
     if (active) {

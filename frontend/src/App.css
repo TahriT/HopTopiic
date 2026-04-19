@@ -47,6 +47,25 @@
   flex-shrink: 0;
 }
 
+.app__mic-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #7f1d1d;
+  color: #fecaca;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.app__mic-error button {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #fecaca;
+  cursor: pointer;
+  font-size: 14px;
+}
+
 .app__content {
   display: flex;
   flex: 1;

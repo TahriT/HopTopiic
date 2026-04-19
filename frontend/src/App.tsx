@@ -18,6 +18,7 @@ function App() {
 
   const [isRecording, setIsRecording] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [micError, setMicError] = useState<string | null>(null);
   const { isCasting, startCast, stopCast } = useCast();
 
   // OBS overlay mode: ?overlay=true hides UI chrome
@@ -105,6 +106,14 @@ function App() {
         />
       </header>
 
+      {/* Mic error banner */}
+      {micError && (
+        <div className="app__mic-error" role="alert">
+          ⚠️ {micError}
+          <button onClick={() => setMicError(null)} aria-label="Dismiss">✕</button>
+        </div>
+      )}
+
       {/* Device picker (shown when device mode is active) */}
       {inputMode === "device" && (
         <div className="app__device-bar">
@@ -140,6 +149,7 @@ function App() {
       <AudioCapture
         onAudioData={handleAudioData}
         active={isRecording}
+        onError={setMicError}
       />
     </div>
   );
