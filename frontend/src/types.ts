@@ -7,6 +7,11 @@ export interface MoodVector {
 
 // ── Topic Tree ────────────────────────────────────────────────
 
+export interface SpeakerInfo {
+  label: string;
+  color: string;
+}
+
 export interface TopicNode {
   id: string;
   label: string;
@@ -19,6 +24,8 @@ export interface TopicNode {
   segments: TranscriptSegment[];
   speaker?: string;
   speakerColor?: string;
+  /** All speakers who contributed to this topic (derived from segments). */
+  speakers: SpeakerInfo[];
 }
 
 export interface TopicEdge {

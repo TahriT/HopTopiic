@@ -53,10 +53,9 @@ export function computeLayout(
   for (const node of nodes.values()) {
     const elapsed = node.timestamp - minTimestamp;
     const x = padding.left + timeToX(elapsed);
-    const y =
-      padding.top +
-      node.hopDepth * baseYStep +
-      node.semanticDistFromRoot * semanticStretch;
+    // Y is determined purely by hopDepth so "return to topic" lands on the
+    // same row as the original topic.  Branches go further down.
+    const y = padding.top + node.hopDepth * baseYStep;
 
     flowNodes.push({
       id: node.id,

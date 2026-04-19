@@ -109,6 +109,21 @@
 }
 
 /* ── Topic Chip (Node) ── */
+/* ── Topic Chip — Title above node ── */
+.topic-chip__title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+  opacity: 0.85;
+}
+
 .topic-chip {
   padding: 6px 12px;
   border-radius: 20px;
@@ -155,10 +170,55 @@
   font-family: monospace;
 }
 
-.topic-chip__speaker {
+/* ── Topic Chip — Speaker icons ── */
+.topic-chip__speakers {
+  margin-top: 2px;
+}
+
+.topic-chip__speakers-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.topic-chip__speaker-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 700;
+  color: #0f172a;
+  border: 1.5px solid #0f172a;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.topic-chip__speaker-more {
+  font-size: 9px;
+  color: #94a3b8;
+  margin-left: 4px;
+  font-family: monospace;
+}
+
+.topic-chip__speakers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 2px;
+}
+
+.topic-chip__speaker-label {
   font-size: 9px;
   font-weight: 600;
   font-family: monospace;
+  white-space: nowrap;
 }
 
 @keyframes chipPulse {
@@ -635,9 +695,9 @@
     display: none;
   }
 
-  .topic-chip__label {
+  .topic-chip__title {
     max-width: 120px;
-    font-size: 11px;
+    font-size: 9px;
   }
 
   .transcript-entry {

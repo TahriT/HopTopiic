@@ -118,6 +118,9 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
         segments: [],
         speaker: msg.speaker,
         speakerColor: msg.speakerColor,
+        speakers: msg.speaker
+          ? [{ label: msg.speaker, color: msg.speakerColor ?? '#94a3b8' }]
+          : [],
       };
       nodes.set(msg.id, node);
 
@@ -169,7 +172,30 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
       };
 
       const next = [...state.segments, seg];
-      return { segments: next.length > MAX_SEGMENTS ? next.slice(-MAX_SEGMENTS) : next };
+
+      // Update the topic's speakers list with this segment's speaker
+      let nodes = state.nodes;
+      if (seg.topicId && seg.speaker) {
+        const topic = state.nodes.get(seg.topicId);
+        if (topic) {
+          const already = topic.speakers.some((s) => s.label === seg.speaker);
+          if (!already) {
+            nodes = new Map(state.nodes);
+            nodes.set(seg.topicId, {
+              ...topic,
+              speakers: [
+                ...topic.speakers,
+                { label: seg.speaker!, color: seg.speakerColor ?? '#94a3b8' },
+              ],
+            });
+          }
+        }
+      }
+
+      return {
+        nodes,
+        segments: next.length > MAX_SEGMENTS ? next.slice(-MAX_SEGMENTS) : next,
+      };
     }),
 
   updateTopic: (msg) =>

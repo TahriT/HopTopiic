@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { Handle, Position } from "@xyflow/react";
 import type { NodeProps } from "@xyflow/react";
 import type { TopicNode } from "../types";
@@ -13,15 +13,24 @@ interface TopicChipData {
 function TopicChipComponent({ data }: NodeProps & { data: TopicChipData }) {
   const { topicNode, isActive, isRoot } = data;
   const style = moodToStyle(topicNode.mood, isActive);
+  const [speakersExpanded, setSpeakersExpanded] = useState(false);
 
   const duration = topicNode.endTimestamp
     ? topicNode.endTimestamp - topicNode.timestamp
     : 0;
   const minWidth = Math.max(80, Math.min(duration * 10 + 80, 240));
 
+  const speakers = topicNode.speakers ?? [];
+
   return (
     <>
       <Handle type="target" position={Position.Left} style={{ opacity: 0 }} />
+
+      {/* Title label above the node */}
+      <div className="topic-chip__title" style={{ color: style.color }}>
+        {topicNode.label}
+      </div>
+
       <div
         className={`topic-chip ${isActive ? "topic-chip--active" : ""} ${isRoot ? "topic-chip--root" : ""}`}
         style={{
@@ -31,24 +40,60 @@ function TopicChipComponent({ data }: NodeProps & { data: TopicChipData }) {
           minWidth,
         }}
       >
-        <span className="topic-chip__label">{topicNode.label}</span>
         <span className="topic-chip__time">
           {formatTime(topicNode.timestamp)}
+          {topicNode.hopDepth > 0 && (
+            <span className="topic-chip__depth">
+              {" "}· depth {topicNode.hopDepth}
+            </span>
+          )}
         </span>
-        {topicNode.speaker && (
-          <span
-            className="topic-chip__speaker"
-            style={{ color: topicNode.speakerColor ?? "#94a3b8" }}
-          >
-            {topicNode.speaker}
-          </span>
-        )}
-        {topicNode.hopDepth > 0 && (
-          <span className="topic-chip__depth">
-            depth {topicNode.hopDepth}
-            {topicNode.semanticDistFromRoot > 0 &&
-              ` · drift ${topicNode.semanticDistFromRoot.toFixed(2)}`}
-          </span>
+
+        {/* Speaker icons row */}
+        {speakers.length > 0 && (
+          <div className="topic-chip__speakers">
+            <button
+              className="topic-chip__speakers-toggle"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSpeakersExpanded((v) => !v);
+              }}
+              title={speakersExpanded ? "Collapse speakers" : `${speakers.length} speaker${speakers.length > 1 ? "s" : ""}`}
+            >
+              {speakers.slice(0, speakersExpanded ? speakers.length : 3).map((s, i) => (
+                <span
+                  key={s.label}
+                  className="topic-chip__speaker-icon"
+                  style={{
+                    backgroundColor: s.color,
+                    marginLeft: i > 0 ? -4 : 0,
+                    zIndex: speakers.length - i,
+                  }}
+                  title={s.label}
+                >
+                  {s.label.charAt(0).toUpperCase()}
+                </span>
+              ))}
+              {!speakersExpanded && speakers.length > 3 && (
+                <span className="topic-chip__speaker-more">
+                  +{speakers.length - 3}
+                </span>
+              )}
+            </button>
+            {speakersExpanded && (
+              <div className="topic-chip__speakers-list">
+                {speakers.map((s) => (
+                  <span
+                    key={s.label}
+                    className="topic-chip__speaker-label"
+                    style={{ color: s.color }}
+                  >
+                    🎙 {s.label}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </div>
       <Handle type="source" position={Position.Right} style={{ opacity: 0 }} />
