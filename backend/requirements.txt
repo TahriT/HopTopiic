@@ -1,0 +1,10 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+websockets==14.1
+vosk==0.3.45
+spacy==3.8.4
+vaderSentiment==3.3.2
+numpy==2.1.3
+scikit-learn==1.6.0
+sounddevice==0.5.1
+pydantic==2.10.3

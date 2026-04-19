@@ -1,0 +1,12 @@
+.git/
+.venv/
+.vite/
+__pycache__/
+node_modules/
+frontend/dist/
+backend/models/
+*.pyc
+.env
+.env.local
+.DS_Store
+Thumbs.db

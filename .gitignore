@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+venv/
+.venv/
+
+# Vosk models (downloaded at runtime)
+backend/models/
+env/
+
+# Node
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Vite cache
+.vite/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Models (large files)
+*.bin
+*.pt
+*.onnx
+
+# Environment
+.env
+.env.local

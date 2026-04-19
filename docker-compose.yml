@@ -1,0 +1,17 @@
+services:
+  hoptopiic:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist Vosk models across rebuilds (optional — they're baked in the image)
+      - vosk-models:/app/backend/models
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    # Uncomment below to pass through host audio devices (Linux only)
+    # devices:
+    #   - /dev/snd:/dev/snd
+
+volumes:
+  vosk-models:

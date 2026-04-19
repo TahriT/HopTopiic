@@ -1,0 +1,628 @@
+/* ── HopTopiic — Dark theme river diagram styles ── */
+
+/* ── App Layout ── */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+}
+
+.app--overlay {
+  background: transparent;
+  height: 100vh;
+}
+
+.app__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.app__title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app__logo {
+  font-size: 22px;
+}
+
+.app__device-bar {
+  padding: 8px 16px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  flex-shrink: 0;
+}
+
+.app__content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.app__canvas {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.app__sidebar {
+  width: 320px;
+  flex-shrink: 0;
+  border-left: 1px solid #334155;
+  overflow-y: auto;
+}
+
+/* ── Timeline Ruler ── */
+.timeline-ruler {
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.timeline-ruler__svg {
+  display: block;
+}
+
+/* ── River Canvas ── */
+.river-canvas {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.river-canvas .react-flow__background {
+  background: #0f172a !important;
+}
+
+/* ── Topic Chip (Node) ── */
+.topic-chip {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 2px solid;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s;
+  backdrop-filter: blur(4px);
+}
+
+.topic-chip:hover {
+  transform: scale(1.05);
+}
+
+.topic-chip--active {
+  animation: chipPulse 2s ease-in-out infinite;
+}
+
+.topic-chip--root {
+  border-width: 3px;
+}
+
+.topic-chip__label {
+  font-weight: 600;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.topic-chip__time {
+  font-size: 10px;
+  color: #94a3b8;
+  font-family: monospace;
+}
+
+.topic-chip__depth {
+  font-size: 9px;
+  color: #64748b;
+  font-family: monospace;
+}
+
+.topic-chip__speaker {
+  font-size: 9px;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+@keyframes chipPulse {
+  0%, 100% { box-shadow: 0 0 8px var(--glow-color, #ffa50044); }
+  50% { box-shadow: 0 0 20px var(--glow-color, #ffa50088); }
+}
+
+/* ── River Edge ── */
+.river-edge__path--active {
+  animation: edgeGlow 2s ease-in-out infinite;
+}
+
+@keyframes edgeGlow {
+  0%, 100% { filter: drop-shadow(0 0 2px currentColor); }
+  50% { filter: drop-shadow(0 0 8px currentColor); }
+}
+
+/* ── Depth Guides ── */
+.depth-guides {
+  pointer-events: none;
+}
+
+/* ── Transcript Panel ── */
+.transcript-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #0f172a;
+}
+
+.transcript-panel--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.transcript-panel__placeholder {
+  color: #475569;
+  font-style: italic;
+}
+
+.transcript-panel__header {
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #1e293b;
+  flex-shrink: 0;
+}
+
+.transcript-panel__list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.transcript-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 12px;
+  font-size: 13px;
+  line-height: 1.4;
+  transition: background 0.15s;
+}
+
+.transcript-entry:hover {
+  background: #1e293b;
+}
+
+.transcript-entry--active {
+  background: #1e293b88;
+}
+
+.transcript-entry__time {
+  font-family: monospace;
+  font-size: 10px;
+  flex-shrink: 0;
+  min-width: 36px;
+  padding-top: 2px;
+}
+
+.transcript-entry__depth-bar {
+  width: 3px;
+  min-height: 16px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+.transcript-entry__text {
+  flex: 1;
+}
+
+.transcript-entry__speaker {
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+  font-family: monospace;
+}
+
+/* ── Settings Panel ── */
+.settings-panel {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.settings-panel__section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-panel__label {
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.settings-panel__status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-dot--connected { background: #22c55e; }
+.status-dot--disconnected { background: #ef4444; }
+.status-dot--loading { background: #f59e0b; animation: blink 1s infinite; }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.settings-panel__toggle {
+  display: flex;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #334155;
+}
+
+.toggle-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  background: transparent;
+  color: #94a3b8;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.toggle-btn:hover {
+  background: #1e293b;
+}
+
+.toggle-btn--active {
+  background: #334155;
+  color: #f1f5f9;
+}
+
+.record-btn, .reset-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.record-btn:hover, .reset-btn:hover {
+  background: #1e293b;
+  color: #f1f5f9;
+}
+
+.record-btn--active {
+  background: #dc262622;
+  border-color: #dc2626;
+  color: #ef4444;
+}
+
+.record-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Device Picker ── */
+.device-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.device-picker__label {
+  font-size: 12px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.device-picker__select {
+  flex: 1;
+  max-width: 400px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: #e2e8f0;
+  font-size: 12px;
+}
+
+.device-picker.loading {
+  color: #64748b;
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* ── Topic input ── */
+.settings-panel__topic-input {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 12px;
+  width: 160px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.settings-panel__topic-input:focus {
+  border-color: #ffa500;
+}
+
+.settings-panel__topic-input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.settings-panel__topic-input::placeholder {
+  color: #475569;
+}
+
+/* ── Server toggle & input ── */
+.settings-panel__server-toggle {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+
+.settings-panel__server-toggle:hover {
+  color: #94a3b8;
+}
+
+.settings-panel__server-input {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-size: 11px;
+  font-family: monospace;
+  width: 190px;
+  outline: none;
+  transition: border-color 0.15s;
+  margin-top: 4px;
+}
+
+.settings-panel__server-input:focus {
+  border-color: #38bdf8;
+}
+
+.settings-panel__server-input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.settings-panel__server-input::placeholder {
+  color: #475569;
+}
+
+/* ── Cast button ── */
+.cast-btn {
+  padding: 4px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cast-btn:hover {
+  background: #1e293b;
+  color: #f1f5f9;
+}
+
+.cast-btn--active {
+  background: #7c3aed22;
+  border-color: #7c3aed;
+  color: #a78bfa;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* ── Sidebar toggle (mobile only) ── */
+.app__sidebar-toggle {
+  display: none;
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  z-index: 20;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: #e2e8f0;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #00000066;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Viewport meta hint ── */
+@viewport { width: device-width; }
+
+/* ── Mobile: ≤768px ── */
+@media (max-width: 768px) {
+  /* Header wraps into rows */
+  .app__header {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+
+  .app__title {
+    font-size: 15px;
+  }
+
+  /* Settings panel scrolls horizontally */
+  .settings-panel {
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .settings-panel__topic-input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .settings-panel__section {
+    gap: 4px;
+  }
+
+  .settings-panel__label {
+    display: none;
+  }
+
+  .toggle-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .record-btn, .reset-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  /* Timeline thinner */
+  .timeline-ruler {
+    max-height: 28px;
+  }
+
+  /* Content stacks vertically */
+  .app__content {
+    flex-direction: column;
+  }
+
+  /* Canvas takes full height */
+  .app__canvas {
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Sidebar is a drawer from bottom */
+  .app__sidebar {
+    width: 100%;
+    border-left: none;
+    border-top: 1px solid #334155;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40vh;
+    transform: translateY(100%);
+    transition: transform 0.25s ease;
+    z-index: 30;
+    background: #0f172a;
+  }
+
+  .app__sidebar--open {
+    transform: translateY(0);
+  }
+
+  /* Show the toggle FAB */
+  .app__sidebar-toggle {
+    display: flex;
+  }
+
+  /* MiniMap smaller on mobile */
+  .react-flow__minimap {
+    width: 100px !important;
+    height: 60px !important;
+  }
+
+  /* Controls smaller */
+  .react-flow__controls {
+    bottom: 68px !important;
+  }
+}
+
+/* ── Small phones: ≤480px ── */
+@media (max-width: 480px) {
+  .app__header {
+    padding: 6px 8px;
+  }
+
+  .app__title {
+    font-size: 13px;
+  }
+
+  .app__logo {
+    font-size: 16px;
+  }
+
+  .settings-panel__status span:not(.status-dot) {
+    display: none;
+  }
+
+  .topic-chip__label {
+    max-width: 120px;
+    font-size: 11px;
+  }
+
+  .transcript-entry {
+    font-size: 12px;
+    padding: 3px 8px;
+  }
+}
