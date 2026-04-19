@@ -27,6 +27,12 @@ interface ConversationState {
   // ── View ──
   viewMode: "tracking" | "overview";
 
+  // ── Timeline scale (user-adjustable X-axis spread) ──
+  timelineScale: number;
+
+  // ── Selection (user clicked a node) ──
+  selectedNodeId: string | null;
+
   // ── Initial topic (user-defined anchor) ──
   initialTopic: string;
 
@@ -42,6 +48,8 @@ interface ConversationState {
   setModelLoaded: (v: boolean) => void;
   setInputMode: (m: "browser" | "device") => void;
   setViewMode: (m: "tracking" | "overview") => void;
+  setTimelineScale: (s: number) => void;
+  setSelectedNodeId: (id: string | null) => void;
   setInitialTopic: (t: string) => void;
   setServerUrl: (url: string) => void;
   reset: () => void;
@@ -80,14 +88,15 @@ function loadServerUrl(): string {
 
 /** Derive WebSocket URL from the stored server address. */
 export function getWsUrl(serverUrl: string): string {
-  const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-  return `${protocol}://${serverUrl}/ws/stream`;
+  // Always use ws:// — the backend runs plain HTTP.
+  // The frontend uses HTTPS only to satisfy getUserMedia secure-context
+  // requirements, but the backend API is not behind TLS.
+  return `ws://${serverUrl}/ws/stream`;
 }
 
 /** Derive HTTP base URL from the stored server address. */
 export function getHttpUrl(serverUrl: string): string {
-  const protocol = window.location.protocol === "https:" ? "https" : "http";
-  return `${protocol}://${serverUrl}`;
+  return `http://${serverUrl}`;
 }
 
 export const useConversationStore = create<ConversationState>((set, get) => ({
@@ -101,6 +110,8 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
   modelLoaded: false,
   inputMode: "browser",
   viewMode: "tracking",
+  timelineScale: 1,
+  selectedNodeId: null,
   initialTopic: "",
   serverUrl: loadServerUrl(),
 
@@ -147,48 +158,95 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
 
   addReconnect: (msg) =>
     set((state) => {
+      const ancestor = state.nodes.get(msg.toTopicId);
+      const nodes = new Map(state.nodes);
+
+      // Create a new continuation node at the CURRENT timestamp but on
+      // the same row (hopDepth) as the ancestor.  This keeps forward
+      // timeline progress while visually showing "back on topic".
+      const contId = `${msg.toTopicId}-cont-${msg.timestamp}`;
+      const contNode: TopicNode = {
+        id: contId,
+        label: ancestor?.label ?? "On Topic",
+        timestamp: msg.timestamp,
+        parentId: msg.toTopicId,
+        hopDepth: ancestor?.hopDepth ?? 0,
+        semanticDistFromRoot: ancestor?.semanticDistFromRoot ?? 0,
+        mood: ancestor?.mood ?? DEFAULT_MOOD,
+        segments: [],
+        speaker: ancestor?.speaker,
+        speakerColor: ancestor?.speakerColor,
+        speakers: ancestor?.speakers ? [...ancestor.speakers] : [],
+      };
+      nodes.set(contId, contNode);
+
+      // Close out the departing topic
+      const from = nodes.get(msg.fromTopicId);
+      if (from && !from.endTimestamp) {
+        nodes.set(msg.fromTopicId, { ...from, endTimestamp: msg.timestamp });
+      }
+
       const edges = [
         ...state.edges,
+        // Return edge from the departing topic → continuation
         {
-          id: `e-return-${msg.fromTopicId}-${msg.toTopicId}-${msg.timestamp}`,
+          id: `e-return-${msg.fromTopicId}-${contId}-${msg.timestamp}`,
           source: msg.fromTopicId,
-          target: msg.toTopicId,
+          target: contId,
           type: "return" as const,
           timestamp: msg.timestamp,
         },
       ];
-      return { edges, activeId: msg.toTopicId };
+
+      return { nodes, edges, activeId: contId };
     }),
 
   addTranscript: (msg) =>
     set((state) => {
+      // The backend's topicId may point at the original ancestor, but we
+      // may have created a continuation node for it.  If the current
+      // activeId is a continuation of msg.topicId, route the segment
+      // to the continuation instead.
+      let resolvedTopicId = msg.topicId;
+      if (
+        resolvedTopicId &&
+        state.activeId &&
+        state.activeId !== resolvedTopicId &&
+        state.activeId.startsWith(resolvedTopicId + "-cont-")
+      ) {
+        resolvedTopicId = state.activeId;
+      }
+
       const seg: TranscriptSegment = {
         text: msg.text,
         start: msg.start,
         end: msg.end,
-        topicId: msg.topicId,
+        topicId: resolvedTopicId,
         speaker: msg.speaker,
         speakerColor: msg.speakerColor,
       };
 
       const next = [...state.segments, seg];
 
-      // Update the topic's speakers list with this segment's speaker
+      // Always clone nodes so we can push segment + update speakers/endTimestamp
       let nodes = state.nodes;
-      if (seg.topicId && seg.speaker) {
-        const topic = state.nodes.get(seg.topicId);
+      if (seg.topicId) {
+        const topic = nodes.get(seg.topicId);
         if (topic) {
-          const already = topic.speakers.some((s) => s.label === seg.speaker);
-          if (!already) {
-            nodes = new Map(state.nodes);
-            nodes.set(seg.topicId, {
-              ...topic,
-              speakers: [
-                ...topic.speakers,
-                { label: seg.speaker!, color: seg.speakerColor ?? '#94a3b8' },
-              ],
+          nodes = new Map(state.nodes);
+          const updatedSpeakers = [...topic.speakers];
+          if (seg.speaker && !updatedSpeakers.some((s) => s.label === seg.speaker)) {
+            updatedSpeakers.push({
+              label: seg.speaker!,
+              color: seg.speakerColor ?? '#94a3b8',
             });
           }
+          nodes.set(seg.topicId, {
+            ...topic,
+            segments: [...topic.segments, seg],
+            speakers: updatedSpeakers,
+            endTimestamp: Math.max(topic.endTimestamp ?? 0, seg.end),
+          });
         }
       }
 
@@ -219,6 +277,8 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
   setModelLoaded: (v) => set({ modelLoaded: v }),
   setInputMode: (m) => set({ inputMode: m }),
   setViewMode: (m) => set({ viewMode: m }),
+  setTimelineScale: (s) => set({ timelineScale: s }),
+  setSelectedNodeId: (id) => set({ selectedNodeId: id }),
   setInitialTopic: (t) => set({ initialTopic: t }),
   setServerUrl: (url) => {
     try { localStorage.setItem(STORAGE_KEY_SERVER, url); } catch {}
@@ -232,6 +292,8 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
       segments: [],
       rootId: null,
       activeId: null,
+      selectedNodeId: null,
+      timelineScale: 1,
       sessionStartTime: null,
     }),
 }));

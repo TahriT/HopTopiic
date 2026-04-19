@@ -1,43 +1,29 @@
 /**
- * Logarithmic time-to-pixel mapping.
+ * Progressive (power-law) time-to-pixel mapping.
  *
- * Maps elapsed seconds → pixel X position using a log scale that:
- *   - Keeps early events well spaced
- *   - Compresses later time so the diagram doesn't stretch infinitely
+ * Early topics stay compact, later topics spread out:
+ *   x = scale * K * t^EXP
  *
- * Formula: x = scale * ln(1 + t / compression)
- *
- * `compression` controls where the log curve starts bending (in seconds).
- * Lower values = more aggressive compression.
- * `scale` controls overall pixel width.
+ * EXP > 1 makes spacing grow over time.
  */
 
-/** How many seconds pass before the log curve starts compressing noticeably. */
-const COMPRESSION_S = 30;
+/** Base pixel multiplier. */
+const K = 2;
 
-/** Pixel scale factor. */
-const SCALE = 600;
+/** Exponent — higher = more expansion over time. */
+const EXP = 1.3;
 
-/**
- * Convert elapsed seconds to a pixel X offset (logarithmic).
- *
- * timeToX(0)  = 0
- * timeToX(30) ≈ 416  (gentle compression starts here)
- * timeToX(60) ≈ 660
- * timeToX(300) ≈ 1420
- */
-export function timeToX(elapsedSeconds: number): number {
+export function timeToX(elapsedSeconds: number, scale: number = 1): number {
   if (elapsedSeconds <= 0) return 0;
-  return SCALE * Math.log(1 + elapsedSeconds / COMPRESSION_S);
+  return scale * K * Math.pow(elapsedSeconds, EXP);
 }
 
 /**
  * Inverse: pixel X offset → elapsed seconds.
- * Useful for hit-testing or ruler label placement.
  */
-export function xToTime(x: number): number {
+export function xToTime(x: number, scale: number = 1): number {
   if (x <= 0) return 0;
-  return COMPRESSION_S * (Math.exp(x / SCALE) - 1);
+  return Math.pow(x / (scale * K), 1 / EXP);
 }
 
 /**

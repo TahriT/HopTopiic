@@ -14,6 +14,7 @@ import { computeLayout, computeCanvasWidth } from "../layout/riverLayout";
 import { DepthGuides, getMaxDepth } from "./DepthGuides";
 import { TopicChip } from "./TopicChip";
 import { RiverEdge } from "./RiverEdge";
+import { TimelineControls } from "./TimelineControls";
 import { useAutoScroll } from "../hooks/useAutoScroll";
 
 const nodeTypes = { topicChip: TopicChip };
@@ -24,19 +25,32 @@ function RiverCanvasInner() {
   const edges = useConversationStore((s) => s.edges);
   const activeId = useConversationStore((s) => s.activeId);
   const rootId = useConversationStore((s) => s.rootId);
+  const timelineScale = useConversationStore((s) => s.timelineScale);
+  const setSelectedNodeId = useConversationStore((s) => s.setSelectedNodeId);
   const { onUserPan } = useAutoScroll();
 
   const { flowNodes, flowEdges } = useMemo(
-    () => computeLayout(nodes, edges, activeId, rootId),
-    [nodes, edges, activeId, rootId],
+    () => computeLayout(nodes, edges, activeId, rootId, timelineScale),
+    [nodes, edges, activeId, rootId, timelineScale],
   );
 
   const maxDepth = useMemo(() => getMaxDepth(nodes), [nodes]);
-  const canvasWidth = useMemo(() => computeCanvasWidth(nodes), [nodes]);
+  const canvasWidth = useMemo(() => computeCanvasWidth(nodes, timelineScale), [nodes, timelineScale]);
 
   const onMoveEnd = useCallback(() => {
     onUserPan();
   }, [onUserPan]);
+
+  const onNodeClick = useCallback(
+    (_: any, node: any) => {
+      setSelectedNodeId(node.id);
+    },
+    [setSelectedNodeId],
+  );
+
+  const onPaneClick = useCallback(() => {
+    setSelectedNodeId(null);
+  }, [setSelectedNodeId]);
 
   return (
     <div className="river-canvas">
@@ -47,6 +61,8 @@ function RiverCanvasInner() {
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onMoveEnd={onMoveEnd}
+        onNodeClick={onNodeClick}
+        onPaneClick={onPaneClick}
         fitView={false}
         minZoom={0.1}
         maxZoom={4}
@@ -80,6 +96,7 @@ function RiverCanvasInner() {
 export function RiverCanvas() {
   return (
     <ReactFlowProvider>
+      <TimelineControls />
       <RiverCanvasInner />
     </ReactFlowProvider>
   );

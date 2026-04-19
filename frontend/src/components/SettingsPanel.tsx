@@ -10,6 +10,7 @@ interface SettingsPanelProps {
   isCasting: boolean;
   onStartCast: () => void;
   onStopCast: () => void;
+  castError?: string | null;
 }
 
 export function SettingsPanel({
@@ -21,6 +22,7 @@ export function SettingsPanel({
   isCasting,
   onStartCast,
   onStopCast,
+  castError,
 }: SettingsPanelProps) {
   const connected = useConversationStore((s) => s.connected);
   const modelLoaded = useConversationStore((s) => s.modelLoaded);
@@ -147,6 +149,11 @@ export function SettingsPanel({
         >
           {isCasting ? "📺 Stop Cast" : "📺 Cast"}
         </button>
+        {castError && (
+          <p className="cast-error" style={{ color: "#e74c3c", fontSize: "0.75rem", margin: "4px 0 0" }}>
+            {castError}
+          </p>
+        )}
       </div>
     </div>
   );

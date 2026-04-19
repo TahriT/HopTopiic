@@ -97,6 +97,98 @@
   display: block;
 }
 
+.timeline-ruler__segment:hover line {
+  opacity: 1 !important;
+  stroke-width: 3;
+}
+.timeline-ruler__segment:hover circle {
+  r: 4;
+}
+
+/* ── Timeline Controls ── */
+.timeline-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 16px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.timeline-controls__scale {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timeline-controls__label {
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.timeline-controls__slider {
+  width: 100px;
+  accent-color: #f59e0b;
+  cursor: pointer;
+}
+
+.timeline-controls__value {
+  color: #e2e8f0;
+  font-family: monospace;
+  font-size: 11px;
+  min-width: 30px;
+}
+
+.timeline-controls__divider {
+  width: 1px;
+  height: 20px;
+  background: #334155;
+}
+
+.timeline-controls__seek {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.timeline-controls__btn {
+  background: #334155;
+  border: 1px solid #475569;
+  color: #e2e8f0;
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-size: 11px;
+  transition: background 0.15s;
+}
+.timeline-controls__btn:hover:not(:disabled) {
+  background: #475569;
+}
+.timeline-controls__btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.timeline-controls__segment-select {
+  background: #0f172a;
+  color: #e2e8f0;
+  border: 1px solid #475569;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  max-width: 200px;
+  cursor: pointer;
+}
+.timeline-controls__segment-select:focus {
+  outline: 1px solid #f59e0b;
+  border-color: #f59e0b;
+}
+
 /* ── River Canvas ── */
 .river-canvas {
   width: 100%;
@@ -221,6 +313,93 @@
   white-space: nowrap;
 }
 
+/* ── Topic Chip — Header row ── */
+.topic-chip__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.topic-chip__expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 10px;
+  font-family: monospace;
+  padding: 0 2px;
+  white-space: nowrap;
+}
+.topic-chip__expand-btn:hover {
+  color: #e2e8f0;
+}
+
+/* ── Topic Chip — Expanded state ── */
+.topic-chip--expanded {
+  max-width: 360px;
+}
+
+.topic-chip__transcript {
+  margin-top: 4px;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+  padding-top: 4px;
+}
+
+.topic-chip__transcript-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 3px;
+}
+
+.topic-chip__copy-btn {
+  background: none;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 4px;
+  color: #94a3b8;
+  font-size: 9px;
+  padding: 1px 6px;
+  cursor: pointer;
+}
+.topic-chip__copy-btn:hover {
+  color: #e2e8f0;
+  border-color: rgba(148, 163, 184, 0.5);
+}
+
+.topic-chip__transcript-list {
+  max-height: 160px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.topic-chip__segment {
+  display: flex;
+  gap: 4px;
+  align-items: baseline;
+  font-size: 10px;
+  line-height: 1.3;
+}
+
+.topic-chip__seg-time {
+  color: #64748b;
+  font-family: monospace;
+  font-size: 9px;
+  flex-shrink: 0;
+}
+
+.topic-chip__seg-speaker {
+  font-weight: 600;
+  font-size: 9px;
+  flex-shrink: 0;
+}
+
+.topic-chip__seg-text {
+  color: #cbd5e1;
+  word-break: break-word;
+}
+
 @keyframes chipPulse {
   0%, 100% { box-shadow: 0 0 8px var(--glow-color, #ffa50044); }
   50% { box-shadow: 0 0 20px var(--glow-color, #ffa50088); }
@@ -293,6 +472,29 @@
 
 .transcript-entry--active {
   background: #1e293b88;
+}
+
+.transcript-entry--selected {
+  background: #334155;
+  border-left: 3px solid #ffa500;
+  padding-left: 9px !important;
+}
+
+.transcript-entry--dimmed {
+  opacity: 0.3;
+}
+
+.transcript-panel__clear-sel {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 12px;
+  margin-left: 8px;
+  padding: 0 4px;
+}
+.transcript-panel__clear-sel:hover {
+  color: #e2e8f0;
 }
 
 .transcript-entry__time {

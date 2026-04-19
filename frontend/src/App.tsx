@@ -15,11 +15,12 @@ function App() {
   const inputMode = useConversationStore((s) => s.inputMode);
   const sessionStartTime = useConversationStore((s) => s.sessionStartTime);
   const reset = useConversationStore((s) => s.reset);
+  const timelineScale = useConversationStore((s) => s.timelineScale);
 
   const [isRecording, setIsRecording] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [micError, setMicError] = useState<string | null>(null);
-  const { isCasting, startCast, stopCast } = useCast();
+  const { isCasting, startCast, stopCast, castError } = useCast();
 
   // OBS overlay mode: ?overlay=true hides UI chrome
   const isOverlay = useMemo(() => {
@@ -103,6 +104,7 @@ function App() {
           isCasting={isCasting}
           onStartCast={startCast}
           onStopCast={stopCast}
+          castError={castError}
         />
       </header>
 
@@ -125,6 +127,7 @@ function App() {
       <TimelineRuler
         elapsedSeconds={elapsed}
         paddingLeft={60}
+        timelineScale={timelineScale}
       />
 
       {/* Main content: river canvas + transcript sidebar */}
