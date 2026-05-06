@@ -1,7 +1,8 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useConversationStore } from "./store/conversationStore";
 import { useCast } from "./hooks/useCast";
+import { WebSpeechTranscriber } from "./hooks/WebSpeechTranscriber";
 import { RiverCanvas } from "./components/RiverCanvas";
 import { TranscriptPanel } from "./components/TranscriptPanel";
 import { TimelineRuler, useElapsedTime } from "./components/TimelineRuler";
@@ -25,6 +26,7 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [micError, setMicError] = useState<string | null>(null);
   const { isCasting, startCast, stopCast, castError } = useCast();
+  const localTranscriberRef = useRef<WebSpeechTranscriber | null>(null);
 
   // OBS overlay mode: ?overlay=true hides UI chrome
   const isOverlay = useMemo(() => {
@@ -38,20 +40,26 @@ function App() {
 
   const handleAudioData = useCallback(
     (pcm: ArrayBuffer) => {
+      if (localMode) {
+        return;
+      }
       sendAudio(pcm);
     },
-    [sendAudio],
+    [localMode, sendAudio],
   );
 
   const handleSetInputMode = useCallback(
     (mode: "browser" | "device", deviceIndex?: number) => {
+      if (localMode) {
+        return;
+      }
       sendMessage({
         type: "set_input",
         mode,
         deviceIndex,
       });
     },
-    [sendMessage],
+    [localMode, sendMessage],
   );
 
   const handleDeviceSelected = useCallback(
@@ -62,26 +70,92 @@ function App() {
   );
 
   const handleReset = useCallback(() => {
-    sendMessage({ type: "reset" });
+    if (!localMode) {
+      sendMessage({ type: "reset" });
+    }
     reset();
     setIsRecording(false);
-  }, [sendMessage, reset]);
+  }, [localMode, sendMessage, reset]);
+
+  useEffect(() => {
+    if (!localMode) {
+      localTranscriberRef.current?.stop().catch(() => {});
+      localTranscriberRef.current = null;
+      return;
+    }
+
+    try {
+      const transcriber = new WebSpeechTranscriber();
+      transcriber.onTranscript = (msg) => {
+        const store = useConversationStore.getState();
+        const now = Date.now() / 1000;
+        const sessionStart = store.sessionStartTime ?? now;
+
+        let topicId = store.activeId;
+        if (!topicId) {
+          const rootId = `local-root-${Math.floor(now)}`;
+          store.addTopic({
+            type: "topic",
+            id: rootId,
+            label: store.initialTopic.trim() || "Live Session",
+            timestamp: 0,
+            parentId: null,
+            hopDepth: 0,
+            semanticDistFromRoot: 0,
+            mood: { energy: 0.5, confidence: 0.5 },
+          });
+          topicId = rootId;
+        }
+
+        store.addTranscript({
+          ...msg,
+          start: Math.max(0, msg.start - sessionStart),
+          end: Math.max(0.1, msg.end - sessionStart),
+          topicId,
+        });
+      };
+      transcriber.onError = (err) => {
+        setMicError(err.message);
+      };
+      localTranscriberRef.current = transcriber;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setMicError(message);
+    }
+
+    return () => {
+      localTranscriberRef.current?.stop().catch(() => {});
+      localTranscriberRef.current = null;
+    };
+  }, [localMode]);
 
   const handleToggleRecording = useCallback(() => {
     setIsRecording((prev) => {
       if (prev) {
-        // Stopping: tell backend to flush & stop
-        sendMessage({ type: "stop_recording" });
+        if (localMode) {
+          localTranscriberRef.current?.stop().catch(() => {});
+        } else {
+          // Stopping: tell backend to flush & stop
+          sendMessage({ type: "stop_recording" });
+        }
       } else {
-        // Starting: send initial topic if set
-        const topic = useConversationStore.getState().initialTopic.trim();
-        if (topic) {
-          sendMessage({ type: "set_topic", topic });
+        if (localMode) {
+          setMicError(null);
+          localTranscriberRef.current?.start().catch((err) => {
+            const message = err instanceof Error ? err.message : String(err);
+            setMicError(message);
+          });
+        } else {
+          // Starting: send initial topic if set
+          const topic = useConversationStore.getState().initialTopic.trim();
+          if (topic) {
+            sendMessage({ type: "set_topic", topic });
+          }
         }
       }
       return !prev;
     });
-  }, [sendMessage]);
+  }, [localMode, sendMessage]);
 
   // OBS overlay: transparent background, only show the river diagram
   if (isOverlay) {
@@ -120,8 +194,8 @@ function App() {
         </div>
       )}
 
-      {/* Device picker (shown when device mode is active) */}
-      {inputMode === "device" && (
+      {/* Device picker (backend mode only) */}
+      {!localMode && inputMode === "device" && (
         <div className="app__device-bar">
           <DevicePicker onDeviceSelected={handleDeviceSelected} />
         </div>

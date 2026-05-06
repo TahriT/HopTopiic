@@ -124,13 +124,14 @@ export function getHttpUrl(serverUrl: string): string {
 }
 
 export const useConversationStore = create<ConversationState>((set) => ({
+  localMode: loadLocalMode(),
   nodes: new Map(),
   edges: [],
   segments: [],
   rootId: null,
   activeId: null,
   sessionStartTime: null,
-  connected: false,
+  connected: loadLocalMode(),
   modelLoaded: loadLocalMode(),
   inputMode: "browser",
   viewMode: "tracking",
@@ -138,7 +139,6 @@ export const useConversationStore = create<ConversationState>((set) => ({
   selectedNodeId: null,
   initialTopic: "",
   serverUrl: loadServerUrl(),
-  localMode: loadLocalMode(),
 
   addTopic: (msg) =>
     set((state) => {

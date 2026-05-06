@@ -107,10 +107,16 @@ export function SettingsPanel({
             className={`toggle-btn ${inputMode === "device" ? "toggle-btn--active" : ""}`}
             onClick={() => onSetInputMode(inputMode === "device" ? "browser" : "device")}
             title="Also capture from a server-side audio device (host only)"
+            disabled={localMode}
           >
             🔌 + Server Device
           </button>
         </div>
+        {localMode && (
+          <p className="cast-error" style={{ color: "#94a3b8", fontSize: "0.75rem", margin: "4px 0 0" }}>
+            Local Mode uses your browser's selected default microphone.
+          </p>
+        )}
       </div>
 
       {/* View mode */}
