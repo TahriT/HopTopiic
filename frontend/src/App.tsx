@@ -127,11 +127,16 @@ function App() {
         </div>
       )}
 
-      {/* Media stream & caption import */}
-      <MediaPanel sendMessage={sendMessage} isRecording={isRecording} />
+      {/* Backend-only features */}
+      {!localMode && (
+        <>
+          {/* Media stream & caption import */}
+          <MediaPanel sendMessage={sendMessage} isRecording={isRecording} />
 
-      {/* OBS + Discord integrations */}
-      <IntegrationsPanel />
+          {/* OBS + Discord integrations */}
+          <IntegrationsPanel />
+        </>
+      )}
 
       {/* Timeline ruler */}
       <TimelineRuler

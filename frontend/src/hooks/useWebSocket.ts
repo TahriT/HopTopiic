@@ -31,7 +31,15 @@ export function useWebSocket() {
 
     const wsUrl = getWsUrl(store.serverUrl);
 
-    const ws = new WebSocket(wsUrl);
+    let ws: WebSocket;
+    try {
+      ws = new WebSocket(wsUrl);
+    } catch (err) {
+      // HTTPS pages cannot open insecure ws:// endpoints; avoid crashing the app.
+      console.warn("[HopTopiic] WebSocket unavailable:", err);
+      store.setConnected(false);
+      return;
+    }
     ws.binaryType = "arraybuffer";
     wsRef.current = ws;
 

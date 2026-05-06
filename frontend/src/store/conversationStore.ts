@@ -94,9 +94,19 @@ function loadServerUrl(): string {
 function loadLocalMode(): boolean {
   try {
     const stored = localStorage.getItem(STORAGE_KEY_LOCAL_MODE);
-    return stored === "true"; // Default to false (backend mode)
+    if (stored === "true") return true;
+    if (stored === "false") return false;
+    // Default to Local Mode on hosted environments (e.g. GitHub Pages)
+    // where ws:// and http:// backend URLs are blocked by HTTPS.
+    return (
+      window.location.hostname.endsWith("github.io") ||
+      window.location.protocol === "https:"
+    );
   } catch {
-    return false;
+    return (
+      window.location.hostname.endsWith("github.io") ||
+      window.location.protocol === "https:"
+    );
   }
 }
 
@@ -121,7 +131,7 @@ export const useConversationStore = create<ConversationState>((set) => ({
   activeId: null,
   sessionStartTime: null,
   connected: false,
-  modelLoaded: false,
+  modelLoaded: loadLocalMode(),
   inputMode: "browser",
   viewMode: "tracking",
   timelineScale: 1,
@@ -301,7 +311,8 @@ export const useConversationStore = create<ConversationState>((set) => ({
   },
   setLocalMode: (v: boolean) => {
     try { localStorage.setItem(STORAGE_KEY_LOCAL_MODE, v ? "true" : "false"); } catch {}
-    set({ localMode: v });
+    // In Local Mode we can start immediately (browser STT), so mark model as ready.
+    set({ localMode: v, modelLoaded: v ? true : false, connected: v ? true : false });
   },
   reset: () =>
     set({
