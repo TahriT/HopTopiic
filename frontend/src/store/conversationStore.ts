@@ -41,6 +41,7 @@ interface ConversationState {
 
   // ── Local Mode ──
   localMode: boolean; // true = frontend-only (Web Speech API), false = use backend
+  selectedMicId: string | null;
 
   // ── Actions ──
   addTopic: (msg: TopicMessage) => void;
@@ -56,6 +57,7 @@ interface ConversationState {
   setInitialTopic: (t: string) => void;
   setServerUrl: (url: string) => void;
   setLocalMode: (v: boolean) => void;
+  setSelectedMicId: (id: string | null) => void;
   reset: () => void;
 }
 
@@ -64,6 +66,7 @@ const MAX_SEGMENTS = 500;
 
 const STORAGE_KEY_SERVER = "hoptopiic-server-url";
 const STORAGE_KEY_LOCAL_MODE = "hoptopiic-local-mode";
+const STORAGE_KEY_MIC_ID = "hoptopiic-local-mic-id";
 
 function getDefaultServer(): string {
   return `${window.location.hostname}:8000`;
@@ -110,6 +113,14 @@ function loadLocalMode(): boolean {
   }
 }
 
+function loadSelectedMicId(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEY_MIC_ID);
+  } catch {
+    return null;
+  }
+}
+
 /** Derive WebSocket URL from the stored server address. */
 export function getWsUrl(serverUrl: string): string {
   // Always use ws:// — the backend runs plain HTTP.
@@ -125,6 +136,7 @@ export function getHttpUrl(serverUrl: string): string {
 
 export const useConversationStore = create<ConversationState>((set) => ({
   localMode: loadLocalMode(),
+  selectedMicId: loadSelectedMicId(),
   nodes: new Map(),
   edges: [],
   segments: [],
@@ -313,6 +325,17 @@ export const useConversationStore = create<ConversationState>((set) => ({
     try { localStorage.setItem(STORAGE_KEY_LOCAL_MODE, v ? "true" : "false"); } catch {}
     // In Local Mode we can start immediately (browser STT), so mark model as ready.
     set({ localMode: v, modelLoaded: v ? true : false, connected: v ? true : false });
+  },
+
+  setSelectedMicId: (id: string | null) => {
+    try {
+      if (id) {
+        localStorage.setItem(STORAGE_KEY_MIC_ID, id);
+      } else {
+        localStorage.removeItem(STORAGE_KEY_MIC_ID);
+      }
+    } catch {}
+    set({ selectedMicId: id });
   },
   reset: () =>
     set({

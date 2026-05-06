@@ -3,6 +3,7 @@ import { useEffect, useRef, useCallback } from "react";
 interface AudioCaptureProps {
   onAudioData: (pcm: ArrayBuffer) => void;
   active: boolean;
+  deviceId?: string | null;
   onError?: (msg: string) => void;
 }
 
@@ -35,7 +36,7 @@ class PCMProcessor extends AudioWorkletProcessor {
 registerProcessor('pcm-processor', PCMProcessor);
 `;
 
-export function AudioCapture({ onAudioData, active, onError }: AudioCaptureProps) {
+export function AudioCapture({ onAudioData, active, deviceId, onError }: AudioCaptureProps) {
   const streamRef = useRef<MediaStream | null>(null);
   const contextRef = useRef<AudioContext | null>(null);
   const workletRef = useRef<AudioWorkletNode | null>(null);
@@ -81,6 +82,7 @@ export function AudioCapture({ onAudioData, active, onError }: AudioCaptureProps
           channelCount: 1,
           echoCancellation: true,
           noiseSuppression: true,
+          ...(deviceId ? { deviceId: { exact: deviceId } } : {}),
         },
       });
 
@@ -127,13 +129,15 @@ export function AudioCapture({ onAudioData, active, onError }: AudioCaptureProps
         msg = "Microphone permission denied. Check browser site settings.";
       } else if (name === "NotFoundError") {
         msg = "No microphone found on this device.";
+      } else if (name === "OverconstrainedError") {
+        msg = "Selected microphone is unavailable. Please choose another device.";
       } else {
         msg = `Microphone error: ${err?.message ?? "unknown"}`;
       }
       console.error("[AudioCapture]", msg, err);
       onError?.(msg);
     }
-  }, [onAudioData, onError]);
+  }, [deviceId, onAudioData, onError]);
 
   useEffect(() => {
     if (active) {

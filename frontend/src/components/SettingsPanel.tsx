@@ -114,7 +114,7 @@ export function SettingsPanel({
         </div>
         {localMode && (
           <p className="cast-error" style={{ color: "#94a3b8", fontSize: "0.75rem", margin: "4px 0 0" }}>
-            Local Mode uses your browser's selected default microphone.
+            Local Mode shows detected microphones below and uses browser mic permissions.
           </p>
         )}
       </div>

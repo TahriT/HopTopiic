@@ -8,6 +8,7 @@ import { TranscriptPanel } from "./components/TranscriptPanel";
 import { TimelineRuler, useElapsedTime } from "./components/TimelineRuler";
 import { AudioCapture } from "./components/AudioCapture";
 import { DevicePicker } from "./components/DevicePicker";
+import { LocalMicPicker } from "./components/LocalMicPicker";
 import { IntegrationsPanel } from "./components/IntegrationsPanel";
 import { MediaPanel } from "./components/MediaPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -21,6 +22,7 @@ function App() {
   const reset = useConversationStore((s) => s.reset);
   const timelineScale = useConversationStore((s) => s.timelineScale);
   const localMode = useConversationStore((s) => s.localMode);
+  const selectedMicId = useConversationStore((s) => s.selectedMicId);
 
   const [isRecording, setIsRecording] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -201,6 +203,13 @@ function App() {
         </div>
       )}
 
+      {/* Local mic picker */}
+      {localMode && (
+        <div className="app__device-bar">
+          <LocalMicPicker />
+        </div>
+      )}
+
       {/* Backend-only features */}
       {!localMode && (
         <>
@@ -242,6 +251,7 @@ function App() {
       <AudioCapture
         onAudioData={handleAudioData}
         active={isRecording}
+        deviceId={selectedMicId}
         onError={setMicError}
       />
     </div>
