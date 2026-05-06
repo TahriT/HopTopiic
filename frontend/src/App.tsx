@@ -250,7 +250,7 @@ function App() {
       {/* Headless audio capture (browser mic — always active when recording) */}
       <AudioCapture
         onAudioData={handleAudioData}
-        active={isRecording}
+        active={!localMode && isRecording}
         deviceId={selectedMicId}
         onError={setMicError}
       />

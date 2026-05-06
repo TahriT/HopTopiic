@@ -10,9 +10,7 @@ import type { TranscriptMessage } from "../types";
 export class WebSpeechTranscriber implements TranscriberProvider {
   private recognition: (SpeechRecognitionType | null) = null;
   private isRecording = false;
-  private audioContext: AudioContext | null = null;
-  private mediaSource: MediaStreamAudioSourceNode | null = null;
-  private microphone: MediaStream | null = null;
+  private shouldRun = false;
 
   onTranscript?: (msg: TranscriptMessage) => void;
   onError?: (err: Error) => void;
@@ -87,29 +85,24 @@ export class WebSpeechTranscriber implements TranscriberProvider {
     this.recognition.onend = () => {
       console.log("[WebSpeech] Recognition ended");
       this.isRecording = false;
+      // Some browsers terminate recognition sporadically; keep session alive.
+      if (this.shouldRun && this.recognition) {
+        try {
+          this.recognition.start();
+        } catch {
+          // Ignore restart race; browser may still be tearing down.
+        }
+      }
     };
   }
 
   async start(): Promise<void> {
-    if (this.isRecording || !this.recognition) return;
+    if (!this.recognition) return;
+    this.shouldRun = true;
+    if (this.isRecording) return;
 
-    // Request microphone access
     try {
-      this.microphone = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
-
-      // Set up audio context if needed (for future audio processing)
-      this.audioContext = new AudioContext();
-      this.mediaSource = this.audioContext.createMediaStreamSource(
-        this.microphone
-      );
-
-      this.recognition?.start();
+      this.recognition.start();
       this.isRecording = true;
       console.log("[WebSpeech] Transcriber started");
     } catch (err) {
@@ -120,24 +113,11 @@ export class WebSpeechTranscriber implements TranscriberProvider {
   }
 
   async stop(): Promise<void> {
+    this.shouldRun = false;
     if (!this.isRecording) return;
 
     this.recognition?.stop();
     this.isRecording = false;
-
-    // Cleanup audio resources
-    if (this.mediaSource) {
-      this.mediaSource.disconnect();
-      this.mediaSource = null;
-    }
-    if (this.microphone) {
-      this.microphone.getTracks().forEach((track) => track.stop());
-      this.microphone = null;
-    }
-    if (this.audioContext) {
-      await this.audioContext.close();
-      this.audioContext = null;
-    }
 
     console.log("[WebSpeech] Transcriber stopped");
   }
