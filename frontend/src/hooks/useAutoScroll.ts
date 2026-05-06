@@ -21,7 +21,7 @@ export function useAutoScroll() {
   const nodeCount = useConversationStore((s) => s.nodes.size);
   const edgeCount = useConversationStore((s) => s.edges.length);
   const paused = useRef(false);
-  const pauseTimer = useRef<ReturnType<typeof setTimeout>>();
+  const pauseTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // ── Tracking mode: follow active node ──
   useEffect(() => {

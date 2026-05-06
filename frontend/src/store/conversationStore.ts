@@ -39,6 +39,9 @@ interface ConversationState {
   // ── Server connection ──
   serverUrl: string; // e.g. "localhost:8000" or "192.168.1.50:8000"
 
+  // ── Local Mode ──
+  localMode: boolean; // true = frontend-only (Web Speech API), false = use backend
+
   // ── Actions ──
   addTopic: (msg: TopicMessage) => void;
   addReconnect: (msg: ReconnectMessage) => void;
@@ -52,6 +55,7 @@ interface ConversationState {
   setSelectedNodeId: (id: string | null) => void;
   setInitialTopic: (t: string) => void;
   setServerUrl: (url: string) => void;
+  setLocalMode: (v: boolean) => void;
   reset: () => void;
 }
 
@@ -59,6 +63,7 @@ const DEFAULT_MOOD: MoodVector = { energy: 0.5, confidence: 0.5 };
 const MAX_SEGMENTS = 500;
 
 const STORAGE_KEY_SERVER = "hoptopiic-server-url";
+const STORAGE_KEY_LOCAL_MODE = "hoptopiic-local-mode";
 
 function getDefaultServer(): string {
   return `${window.location.hostname}:8000`;
@@ -86,6 +91,15 @@ function loadServerUrl(): string {
   }
 }
 
+function loadLocalMode(): boolean {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_LOCAL_MODE);
+    return stored === "true"; // Default to false (backend mode)
+  } catch {
+    return false;
+  }
+}
+
 /** Derive WebSocket URL from the stored server address. */
 export function getWsUrl(serverUrl: string): string {
   // Always use ws:// — the backend runs plain HTTP.
@@ -99,7 +113,7 @@ export function getHttpUrl(serverUrl: string): string {
   return `http://${serverUrl}`;
 }
 
-export const useConversationStore = create<ConversationState>((set, get) => ({
+export const useConversationStore = create<ConversationState>((set) => ({
   nodes: new Map(),
   edges: [],
   segments: [],
@@ -114,6 +128,7 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
   selectedNodeId: null,
   initialTopic: "",
   serverUrl: loadServerUrl(),
+  localMode: loadLocalMode(),
 
   addTopic: (msg) =>
     set((state) => {
@@ -284,7 +299,10 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
     try { localStorage.setItem(STORAGE_KEY_SERVER, url); } catch {}
     set({ serverUrl: url });
   },
-
+  setLocalMode: (v: boolean) => {
+    try { localStorage.setItem(STORAGE_KEY_LOCAL_MODE, v ? "true" : "false"); } catch {}
+    set({ localMode: v });
+  },
   reset: () =>
     set({
       nodes: new Map(),

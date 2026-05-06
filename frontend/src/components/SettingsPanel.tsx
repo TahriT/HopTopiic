@@ -32,6 +32,8 @@ export function SettingsPanel({
   const setInitialTopic = useConversationStore((s) => s.setInitialTopic);
   const serverUrl = useConversationStore((s) => s.serverUrl);
   const setServerUrl = useConversationStore((s) => s.setServerUrl);
+  const localMode = useConversationStore((s) => s.localMode);
+  const setLocalMode = useConversationStore((s) => s.setLocalMode);
 
   const [showServer, setShowServer] = useState(false);
 
@@ -54,6 +56,7 @@ export function SettingsPanel({
       </div>
 
       {/* Server URL (collapsible) */}
+      {!localMode && (
       <div className="settings-panel__section">
         <button
           className="settings-panel__server-toggle"
@@ -73,6 +76,7 @@ export function SettingsPanel({
           />
         )}
       </div>
+      )}
 
       {/* Initial topic input */}
       <div className="settings-panel__section">
@@ -126,6 +130,29 @@ export function SettingsPanel({
             title="Show full graph with all topics and loopbacks"
           >
             🗺️ Overview
+          </button>
+        </div>
+      </div>
+
+      {/* Local Mode */}
+      <div className="settings-panel__section">
+        <label className="settings-panel__label">Mode</label>
+        <div className="settings-panel__toggle">
+          <button
+            className={`toggle-btn ${!localMode ? "toggle-btn--active" : ""}`}
+            onClick={() => setLocalMode(false)}
+            disabled={isRecording}
+            title="Connect to backend server for full STT and NLP"
+          >
+            🔗 Backend
+          </button>
+          <button
+            className={`toggle-btn ${localMode ? "toggle-btn--active" : ""}`}
+            onClick={() => setLocalMode(true)}
+            disabled={isRecording}
+            title="Browser-only mode (Web Speech API, no backend needed)"
+          >
+            💻 Local
           </button>
         </div>
       </div>

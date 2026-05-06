@@ -43,7 +43,7 @@ export function computeLayout(
   timelineScale: number = 1,
   config: LayoutConfig = DEFAULT_CONFIG,
 ): { flowNodes: RiverNode[]; flowEdges: RiverEdge[] } {
-  const { pixelsPerSecond, baseYStep, semanticStretch, padding } = config;
+  const { baseYStep, padding } = config;
 
   // Find the earliest timestamp to use as t=0
   let minTimestamp = Infinity;

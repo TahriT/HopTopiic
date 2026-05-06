@@ -13,7 +13,7 @@ interface TopicChipData {
 }
 
 function TopicChipComponent({ data }: NodeProps & { data: TopicChipData }) {
-  const { topicNode, isActive, isRoot, depthRatio } = data;
+  const { topicNode, isActive, isRoot } = data;
   const style = moodToStyle(topicNode.mood, isActive);
   const [speakersExpanded, setSpeakersExpanded] = useState(false);
   const [expanded, setExpanded] = useState(false);

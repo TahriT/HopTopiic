@@ -55,6 +55,7 @@ export function TranscriptPanel() {
         {segments.map((seg, i) => {
           const isSelected = !!selectedNodeId && seg.topicId === selectedNodeId;
           const isDimmed = !!selectedNodeId && !isSelected;
+          const isLatest = i === segments.length - 1;
           let ref: React.Ref<HTMLDivElement> | undefined;
           if (isSelected && !firstSelectedAssigned) {
             ref = firstSelectedRef;
@@ -69,6 +70,7 @@ export function TranscriptPanel() {
               isActive={seg.topicId === activeId}
               isSelected={isSelected}
               isDimmed={isDimmed}
+              isLatest={isLatest}
             />
           );
         })}
@@ -88,8 +90,9 @@ const TranscriptEntry = React.forwardRef<
     isActive: boolean;
     isSelected: boolean;
     isDimmed: boolean;
+    isLatest: boolean;
   }
->(function TranscriptEntry({ segment, topicNode, isActive, isSelected, isDimmed }, ref) {
+>(function TranscriptEntry({ segment, topicNode, isActive, isSelected, isDimmed, isLatest }, ref) {
   const depth = topicNode?.hopDepth ?? 0;
   const color = topicNode ? moodToTextColor(topicNode.mood) : "#94a3b8";
 
@@ -101,6 +104,7 @@ const TranscriptEntry = React.forwardRef<
         isActive && "transcript-entry--active",
         isSelected && "transcript-entry--selected",
         isDimmed && "transcript-entry--dimmed",
+        isLatest && "transcript-entry--latest",
       ].filter(Boolean).join(" ")}
       style={{ paddingLeft: 12 + depth * 16 }}
     >

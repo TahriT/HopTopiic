@@ -20,13 +20,13 @@ function isLocalhost(): boolean {
 export function useCast() {
   const [isCasting, setIsCasting] = useState(false);
   const [castError, setCastError] = useState<string | null>(null);
-  const presentationRef = useRef<PresentationConnection | null>(null);
-  const requestRef = useRef<PresentationRequest | null>(null);
+  const presentationRef = useRef<any | null>(null);
+  const requestRef = useRef<any | null>(null);
 
   const castUrl = `${window.location.origin}${window.location.pathname}?overlay=true`;
 
   /** Attach lifecycle listeners on a PresentationConnection. */
-  const bindConnection = useCallback((connection: PresentationConnection) => {
+  const bindConnection = useCallback((connection: any) => {
     presentationRef.current = connection;
     setIsCasting(true);
 
@@ -40,8 +40,8 @@ export function useCast() {
 
     // Critical: handle connection-level errors so they don't
     // bubble up as unhandled and crash the React tree.
-    connection.addEventListener("error", (e) => {
-      console.warn("[Cast] connection error:", e);
+    connection.addEventListener("error", (_e: any) => {
+      console.warn("[Cast] connection error:", _e);
       setCastError("Cast connection lost. The receiving device may not be reachable.");
       cleanup();
     });
@@ -52,12 +52,13 @@ export function useCast() {
      Skip on the overlay page — receiver must not interfere. */
   useEffect(() => {
     if (isOverlayPage) return;
+    const PresentationRequest = (window as any).PresentationRequest;
     if (typeof PresentationRequest === "undefined") return;
     try {
       const req = new PresentationRequest([castUrl]);
       requestRef.current = req;
-      if (navigator.presentation) {
-        navigator.presentation.defaultRequest = req;
+      if ((navigator as any).presentation) {
+        (navigator as any).presentation.defaultRequest = req;
       }
     } catch {
       // PresentationRequest constructor can throw on unsupported origins
@@ -83,7 +84,8 @@ export function useCast() {
     }
 
     // ----- Presentation API (Chrome / Edge cast dialog) -----
-    if (typeof PresentationRequest !== "undefined" && navigator.presentation) {
+    const PresentationRequest = (window as any).PresentationRequest;
+    if (typeof PresentationRequest !== "undefined" && (navigator as any).presentation) {
       try {
         const request = requestRef.current ?? new PresentationRequest([castUrl]);
         const connection = await request.start(); // native device-picker

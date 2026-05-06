@@ -9,6 +9,7 @@ embedding belongs to a known speaker or is a new one.
 from __future__ import annotations
 
 import logging
+import time
 
 import numpy as np
 
@@ -47,6 +48,25 @@ class SpeakerTracker:
         self._speakers: list[tuple[str, list[np.ndarray]]] = []
         # Track the last assigned speaker so short utterances inherit it
         self._last_speaker_idx: int = 0
+        # External source (e.g., Discord Activity speaking indicator) can
+        # temporarily override Vosk-based diarization.
+        self._external_active: tuple[str, str, float] | None = None
+
+    def set_external_active_speaker(
+        self,
+        label: str,
+        color: str | None = None,
+        ttl_seconds: float = 3.0,
+    ) -> None:
+        """Set a temporary external speaker override.
+
+        When active, identify() will return this speaker label/color first.
+        """
+        if not label:
+            return
+        chosen = color or self._color_for_label(label)
+        expires_at = time.time() + float(np.clip(ttl_seconds, 0.5, 30.0))
+        self._external_active = (label, chosen, expires_at)
 
     @property
     def speaker_count(self) -> int:
@@ -65,6 +85,15 @@ class SpeakerTracker:
             If spk_vector is None, returns the last-known speaker.
         """
         word_count = len(text.split()) if text else 0
+
+        # Prefer external active-speaker signal when present.
+        ext = self._external_active
+        if ext is not None:
+            label, color, expires_at = ext
+            now = time.time()
+            if now <= expires_at:
+                return (label, color)
+            self._external_active = None
 
         # No vector at all → return last-known speaker
         if spk_vector is None:
@@ -116,6 +145,7 @@ class SpeakerTracker:
     def reset(self) -> None:
         self._speakers.clear()
         self._last_speaker_idx = 0
+        self._external_active = None
 
     def _last_speaker(self) -> tuple[str, str]:
         """Return the last-known speaker label/color, or a default."""
@@ -139,3 +169,7 @@ class SpeakerTracker:
         if norm_a < 1e-8 or norm_b < 1e-8:
             return 0.0
         return float(np.dot(a, b) / (norm_a * norm_b))
+
+    def _color_for_label(self, label: str) -> str:
+        idx = abs(hash(label)) % len(SPEAKER_COLORS)
+        return SPEAKER_COLORS[idx]

@@ -21,8 +21,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .audio_capture import DeviceAudioCapture, list_audio_devices
+from .caption_parser import parse_captions
+from .discord_integration import DiscordIntegration
+from .media_stream import MediaStreamer
 from .models import (
     AudioDeviceList,
+    DiscordConfigRequest,
+    DiscordSpeakerActivityRequest,
     DeviceSelectRequest,
     InputMode,
     MoodVector,
@@ -92,6 +97,15 @@ deferred_mood = DeferredMoodAnalyzer(
 def _on_device_audio(audio: np.ndarray) -> None:
     """Called from sounddevice thread when device capture is active."""
     transcriber.feed_audio(audio)
+
+
+def _on_media_audio(audio: np.ndarray) -> None:
+    """Called from media streamer thread when media stream is active."""
+    transcriber.feed_audio(audio)
+
+
+media_streamer = MediaStreamer(on_audio=_on_media_audio)
+discord_integration = DiscordIntegration()
 
 
 def _on_transcript_segment(
@@ -217,6 +231,8 @@ async def lifespan(app: FastAPI):
     _processing_running = False
     transcriber.stop()
     deferred_mood.stop()
+    media_streamer.stop()
+    await discord_integration.stop_bot()
     if device_capture:
         device_capture.stop()
     logger.info("[LIFESPAN] Shutdown complete")
@@ -260,6 +276,9 @@ async def _broadcast_loop():
                 dead.add(ws)
         connected_ws.difference_update(dead)
 
+        # Fire-and-forget publish to external integrations.
+        asyncio.create_task(discord_integration.publish_event(msg))
+
 
 # ── REST endpoints ──────────────────────────────────────────────
 
@@ -288,6 +307,70 @@ async def get_status():
         modelLoaded=transcriber.is_loaded,
         inputMode=input_mode,
     )
+
+
+@app.get("/api/integrations")
+async def get_integrations_status():
+    return {
+        "discord": discord_integration.get_config(),
+    }
+
+
+@app.post("/api/integrations/discord")
+async def set_discord_config(req: DiscordConfigRequest):
+    discord_integration.set_config(
+        enabled=req.enabled,
+        webhook_url=req.webhookUrl,
+        bot_enabled=req.botEnabled,
+        bot_token=req.botToken,
+        app_public_url=req.appPublicUrl,
+    )
+    return {
+        "status": "ok",
+        "discord": discord_integration.get_config(),
+    }
+
+
+@app.post("/api/integrations/discord/test")
+async def send_discord_test():
+    ok, message = await discord_integration.send_test()
+    return {
+        "ok": ok,
+        "message": message,
+    }
+
+
+@app.post("/api/integrations/discord/bot/start")
+async def start_discord_bot():
+    ok, message = await discord_integration.start_bot()
+    return {
+        "ok": ok,
+        "message": message,
+        "discord": discord_integration.get_config(),
+    }
+
+
+@app.post("/api/integrations/discord/bot/stop")
+async def stop_discord_bot():
+    ok, message = await discord_integration.stop_bot()
+    return {
+        "ok": ok,
+        "message": message,
+        "discord": discord_integration.get_config(),
+    }
+
+
+@app.post("/api/integrations/discord/speaker-activity")
+async def discord_speaker_activity(req: DiscordSpeakerActivityRequest):
+    speaker_tracker.set_external_active_speaker(
+        label=req.speaker,
+        color=req.color,
+        ttl_seconds=req.ttlSeconds,
+    )
+    return {
+        "ok": True,
+        "message": f"Speaker override set: {req.speaker}",
+    }
 
 
 # ── WebSocket endpoint ──────────────────────────────────────────
@@ -372,6 +455,7 @@ async def ws_stream(ws: WebSocket):
 
                 elif msg_type == "reset":
                     logger.info("[WS] Resetting session")
+                    media_streamer.stop()
                     transcriber.reset()
                     topic_analyzer.reset()
                     speaker_tracker.reset()
@@ -403,6 +487,88 @@ async def ws_stream(ws: WebSocket):
                             await ws.send_json({"type": "error", "message": "Failed to set topic (model not ready?)"})
                     else:
                         await ws.send_json({"type": "error", "message": "Empty topic text"})
+
+                elif msg_type == "stream_media":
+                    url = data.get("url", "").strip()
+                    if not url:
+                        await ws.send_json({"type": "error", "message": "Empty media URL"})
+                    else:
+                        logger.info("[WS] Starting media stream: %s", url[:120])
+                        # Ensure transcriber is running
+                        if not transcriber._running:
+                            transcriber.start()
+                        media_streamer.start(url)
+                        await ws.send_json({
+                            "type": "status",
+                            "message": f"Streaming: {url[:60]}",
+                            "modelLoaded": transcriber.is_loaded,
+                            "inputMode": input_mode.value,
+                        })
+
+                elif msg_type == "stop_media":
+                    logger.info("[WS] Stopping media stream")
+                    media_streamer.stop()
+                    await ws.send_json({
+                        "type": "status",
+                        "message": "Media stream stopped",
+                        "modelLoaded": transcriber.is_loaded,
+                        "inputMode": input_mode.value,
+                    })
+
+                elif msg_type == "import_captions":
+                    caption_content = data.get("content", "")
+                    filename = data.get("filename", "")
+                    if not caption_content:
+                        await ws.send_json({"type": "error", "message": "Empty caption content"})
+                    else:
+                        logger.info("[WS] Importing captions from %s (%d chars)", filename, len(caption_content))
+                        try:
+                            segments = parse_captions(caption_content, filename)
+                            if not segments:
+                                await ws.send_json({"type": "error", "message": "No captions found in file"})
+                            else:
+                                # Ensure transcriber is started so processing loop runs
+                                if not transcriber._running:
+                                    transcriber.start()
+                                # Feed each caption segment into the processing pipeline
+                                imported_count = 0
+                                dropped_count = 0
+                                for seg in segments:
+                                    try:
+                                        _segment_queue.put_nowait((seg.text, seg.start, seg.end, None))
+                                        imported_count += 1
+                                    except queue.Full:
+                                        dropped_count += 1
+                                if dropped_count:
+                                    logger.warning("[WS] dropped %d caption segments (queue full)", dropped_count)
+                                await ws.send_json({
+                                    "type": "status",
+                                    "message": f"Imported {imported_count} captions" + (f" ({dropped_count} dropped)" if dropped_count else ""),
+                                    "modelLoaded": transcriber.is_loaded,
+                                    "inputMode": input_mode.value,
+                                })
+                        except Exception as e:
+                            logger.exception("[WS] Failed to parse captions")
+                            await ws.send_json({"type": "error", "message": f"Caption parse error: {e}"})
+
+                elif msg_type == "discord_speaker_activity":
+                    speaker = str(data.get("speaker", "")).strip()
+                    if not speaker:
+                        await ws.send_json({"type": "error", "message": "Missing speaker field"})
+                    else:
+                        ttl = float(data.get("ttlSeconds", 3.0))
+                        color = data.get("color")
+                        speaker_tracker.set_external_active_speaker(
+                            label=speaker,
+                            color=color,
+                            ttl_seconds=ttl,
+                        )
+                        await ws.send_json({
+                            "type": "status",
+                            "message": f"Discord speaker active: {speaker}",
+                            "modelLoaded": transcriber.is_loaded,
+                            "inputMode": input_mode.value,
+                        })
 
     except (WebSocketDisconnect, RuntimeError):
         pass

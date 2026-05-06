@@ -14,6 +14,7 @@ FROM python:3.12-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libportaudio2 \
     libasound2-dev \
+    ffmpeg \
     unzip \
     curl \
     && rm -rf /var/lib/apt/lists/*

@@ -19,6 +19,7 @@ if (hasCert) {
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/HopTopiic/',
   plugins: [react()],
   server: {
     host: '0.0.0.0',

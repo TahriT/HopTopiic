@@ -6,11 +6,19 @@ const RECONNECT_DELAY_MS = 2000;
 
 export function useWebSocket() {
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimer = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   /** Guard: set to true by cleanup, prevents orphaned onclose from reconnecting. */
   const disposed = useRef(false);
 
   const connect = useCallback(() => {
+    const store = useConversationStore.getState();
+    
+    // Skip if Local Mode is enabled
+    if (store.localMode) {
+      console.log("[HopTopiic] WebSocket disabled (Local Mode enabled)");
+      return;
+    }
+
     // Prevent duplicate connections (OPEN *or* still CONNECTING)
     const cur = wsRef.current;
     if (
@@ -21,7 +29,6 @@ export function useWebSocket() {
       return;
     }
 
-    const store = useConversationStore.getState();
     const wsUrl = getWsUrl(store.serverUrl);
 
     const ws = new WebSocket(wsUrl);
@@ -81,8 +88,9 @@ export function useWebSocket() {
     };
   }, []);
 
-  // Subscribe to serverUrl changes — reconnect when it changes
+  // Subscribe to serverUrl and localMode changes — reconnect when they change
   const serverUrl = useConversationStore((s) => s.serverUrl);
+  const localMode = useConversationStore((s) => s.localMode);
 
   useEffect(() => {
     // Dispose first to prevent any pending onclose from reconnecting
@@ -94,14 +102,18 @@ export function useWebSocket() {
     }
     // Now allow new connection
     disposed.current = false;
-    connect();
+    
+    if (!localMode) {
+      connect();
+    }
+    
     return () => {
       disposed.current = true;
       clearTimeout(reconnectTimer.current);
       wsRef.current?.close();
       wsRef.current = null;
     };
-  }, [connect, serverUrl]);
+  }, [connect, serverUrl, localMode]);
 
   /** Send binary PCM audio data. */
   const sendAudio = useCallback((pcm: ArrayBuffer) => {

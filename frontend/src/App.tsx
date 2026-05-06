@@ -7,7 +7,10 @@ import { TranscriptPanel } from "./components/TranscriptPanel";
 import { TimelineRuler, useElapsedTime } from "./components/TimelineRuler";
 import { AudioCapture } from "./components/AudioCapture";
 import { DevicePicker } from "./components/DevicePicker";
+import { IntegrationsPanel } from "./components/IntegrationsPanel";
+import { MediaPanel } from "./components/MediaPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
+import { ExportPanel } from "./components/ExportPanel";
 import "./App.css";
 
 function App() {
@@ -16,6 +19,7 @@ function App() {
   const sessionStartTime = useConversationStore((s) => s.sessionStartTime);
   const reset = useConversationStore((s) => s.reset);
   const timelineScale = useConversationStore((s) => s.timelineScale);
+  const localMode = useConversationStore((s) => s.localMode);
 
   const [isRecording, setIsRecording] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -123,6 +127,12 @@ function App() {
         </div>
       )}
 
+      {/* Media stream & caption import */}
+      <MediaPanel sendMessage={sendMessage} isRecording={isRecording} />
+
+      {/* OBS + Discord integrations */}
+      <IntegrationsPanel />
+
       {/* Timeline ruler */}
       <TimelineRuler
         elapsedSeconds={elapsed}
@@ -145,6 +155,7 @@ function App() {
         </div>
         <div className={`app__sidebar ${sidebarOpen ? "app__sidebar--open" : ""}`}>
           <TranscriptPanel />
+          {localMode && <ExportPanel />}
         </div>
       </div>
 

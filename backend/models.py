@@ -99,3 +99,17 @@ class AudioDeviceList(BaseModel):
 
 class DeviceSelectRequest(BaseModel):
     deviceIndex: int
+
+
+class DiscordConfigRequest(BaseModel):
+    enabled: bool = False
+    webhookUrl: str = ""
+    botEnabled: bool = False
+    botToken: str = ""
+    appPublicUrl: str = ""
+
+
+class DiscordSpeakerActivityRequest(BaseModel):
+    speaker: str
+    color: str | None = None
+    ttlSeconds: float = 3.0

@@ -128,7 +128,37 @@ export interface SetTopicMessage {
   topic: string;
 }
 
-export type ClientMessage = SetInputMessage | ResetMessage | StopRecordingMessage | SetTopicMessage;
+export interface StreamMediaMessage {
+  type: "stream_media";
+  url: string;
+}
+
+export interface StopMediaMessage {
+  type: "stop_media";
+}
+
+export interface ImportCaptionsMessage {
+  type: "import_captions";
+  content: string;
+  filename: string;
+}
+
+export interface DiscordSpeakerActivityMessage {
+  type: "discord_speaker_activity";
+  speaker: string;
+  color?: string;
+  ttlSeconds?: number;
+}
+
+export type ClientMessage =
+  | SetInputMessage
+  | ResetMessage
+  | StopRecordingMessage
+  | SetTopicMessage
+  | StreamMediaMessage
+  | StopMediaMessage
+  | ImportCaptionsMessage
+  | DiscordSpeakerActivityMessage;
 
 // ── Audio Devices ─────────────────────────────────────────────
 
