@@ -9,6 +9,7 @@ import { TimelineRuler, useElapsedTime } from "./components/TimelineRuler";
 import { AudioCapture } from "./components/AudioCapture";
 import { DevicePicker } from "./components/DevicePicker";
 import { LocalMicPicker } from "./components/LocalMicPicker";
+import { LocalMicMeter } from "./components/LocalMicMeter";
 import { IntegrationsPanel } from "./components/IntegrationsPanel";
 import { MediaPanel } from "./components/MediaPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
@@ -207,6 +208,7 @@ function App() {
       {localMode && (
         <div className="app__device-bar">
           <LocalMicPicker />
+          <LocalMicMeter deviceId={selectedMicId} active={!isRecording} />
         </div>
       )}
 

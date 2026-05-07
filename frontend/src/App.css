@@ -931,6 +931,44 @@
   font-size: 12px;
 }
 
+.local-mic-meter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 250px;
+  margin-left: 8px;
+}
+
+.local-mic-meter__label {
+  font-size: 11px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.local-mic-meter__track {
+  width: 120px;
+  height: 8px;
+  border-radius: 999px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  overflow: hidden;
+}
+
+.local-mic-meter__fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #eab308, #ef4444);
+  transition: width 80ms linear;
+}
+
+.local-mic-meter__status {
+  min-width: 88px;
+  font-size: 11px;
+  color: #cbd5e1;
+  font-family: monospace;
+}
+
 .device-picker.loading {
   color: #64748b;
   font-size: 12px;
