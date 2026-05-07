@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — HopTopicc</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      line-height: 1.7;
+      padding: 48px 24px 80px;
+    }
+    .page { max-width: 720px; margin: 0 auto; }
+    .logo { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+    .logo a { color: #e2e8f0; text-decoration: none; }
+    .logo a:hover { color: #93c5fd; }
+    .meta { font-size: 13px; color: #64748b; margin-bottom: 48px; }
+    h1 { font-size: 26px; font-weight: 700; margin-bottom: 8px; }
+    h2 { font-size: 17px; font-weight: 600; color: #93c5fd; margin: 36px 0 10px; }
+    p  { margin-bottom: 14px; color: #cbd5e1; }
+    ul { padding-left: 22px; margin-bottom: 14px; color: #cbd5e1; }
+    li { margin-bottom: 6px; }
+    a  { color: #93c5fd; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 14px; color: #cbd5e1; }
+    th { text-align: left; padding: 8px 12px; background: #1e293b; color: #94a3b8; font-weight: 600; }
+    td { padding: 8px 12px; border-bottom: 1px solid #1e293b; }
+    hr { border: none; border-top: 1px solid #1e293b; margin: 40px 0; }
+    code { background: #1e293b; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="logo"><a href="/HopTopiic/">🐇 HopTopicc</a></div>
+    <div class="meta">Last updated: May 2026</div>
+
+    <h1>Privacy Policy</h1>
+    <p>
+      HopTopicc is designed with privacy as a default. This policy explains what data is collected,
+      where it is stored, and how it is used.
+    </p>
+
+    <h2>1. Summary</h2>
+    <p>
+      <strong>HopTopicc collects no personal data on its servers.</strong> The app runs entirely in
+      your browser. Speech is processed locally by the browser's built-in Web Speech API and never
+      leaves your device via HopTopicc.
+    </p>
+
+    <h2>2. Data Stored in Your Browser</h2>
+    <p>The following items are stored in your browser's <code>localStorage</code> only:</p>
+    <table>
+      <thead>
+        <tr><th>Key</th><th>Contents</th><th>When cleared</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>hoptopicc-local-mode</code></td><td>Whether Local Mode is active (true/false)</td><td>On browser clear</td></tr>
+        <tr><td><code>hoptopicc-local-mic-id</code></td><td>Your selected microphone device ID</td><td>On browser clear</td></tr>
+        <tr><td><code>hoptopicc-server-url</code></td><td>Backend server address (Backend Mode only)</td><td>On browser clear</td></tr>
+        <tr><td><code>hoptopicc-discord-webhook</code></td><td>Discord webhook URL (if you connected a channel)</td><td>On disconnect or browser clear</td></tr>
+        <tr><td><code>hoptopicc-discord-channel</code></td><td>Discord channel name (display only)</td><td>On disconnect or browser clear</td></tr>
+      </tbody>
+    </table>
+    <p>All of the above stays on your device and is never transmitted to HopTopicc.</p>
+
+    <h2>3. Microphone &amp; Speech</h2>
+    <p>
+      In Local Mode, your microphone audio is processed entirely by the browser's
+      Web Speech API (provided by your browser vendor, e.g. Google Chrome, Microsoft Edge).
+      HopTopicc never receives, stores, or transmits raw audio or transcripts.
+    </p>
+    <p>
+      Please review your browser vendor's privacy policy to understand how the Web Speech API
+      handles audio on their infrastructure.
+    </p>
+
+    <h2>4. Discord Integration</h2>
+    <p>
+      If you connect a Discord channel, HopTopicc will POST topic-change notifications to
+      the webhook URL you authorised via Discord's OAuth2 flow. These messages contain:
+    </p>
+    <ul>
+      <li>The inferred topic label (derived from keyword frequency — not verbatim speech)</li>
+      <li>A timestamp</li>
+      <li>The trigger type (keyword drift or transition phrase)</li>
+    </ul>
+    <p>
+      No audio, full transcripts, or personally identifying information are included in
+      Discord posts. The webhook URL is stored only in your browser's local storage.
+    </p>
+
+    <h2>5. Third-Party Services</h2>
+    <ul>
+      <li><strong>GitHub Pages</strong> — hosts the static app files. GitHub may log IP addresses and HTTP headers per their privacy policy.</li>
+      <li><strong>Discord</strong> — only if you use the Discord integration. Messages are governed by Discord's Privacy Policy.</li>
+    </ul>
+
+    <h2>6. Analytics &amp; Tracking</h2>
+    <p>
+      HopTopicc does not use cookies, analytics scripts, tracking pixels, or any
+      third-party analytics tools.
+    </p>
+
+    <h2>7. Children's Privacy</h2>
+    <p>
+      HopTopicc is not directed at children under 13. We do not knowingly collect information
+      from children under 13.
+    </p>
+
+    <h2>8. Changes to This Policy</h2>
+    <p>
+      We may update this Privacy Policy from time to time. The "Last updated" date at the top of
+      this page will reflect any changes.
+    </p>
+
+    <h2>9. Contact</h2>
+    <p>
+      Questions or concerns? Open an issue at
+      <a href="https://github.com/TahriT/HopTopicc" target="_blank" rel="noreferrer">
+        github.com/TahriT/HopTopicc
+      </a>.
+    </p>
+
+    <hr />
+    <p style="font-size:13px;color:#475569;">
+      <a href="/HopTopiic/">← Back to HopTopicc</a>
+      &nbsp;·&nbsp;
+      <a href="/HopTopiic/tos.html">Terms of Service</a>
+    </p>
+  </div>
+</body>
+</html>
