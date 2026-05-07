@@ -21,7 +21,7 @@ if (hasCert) {
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/HopTopiic/',
+  base: '/HopTopicc/',
   plugins: [react()],
   // @ts-ignore — merging vitest config
   test: {

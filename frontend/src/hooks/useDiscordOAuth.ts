@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 const DISCORD_CLIENT_ID = "1501781314326626445";
-const REDIRECT_URI = "https://tahrit.github.io/HopTopiic/";
+const REDIRECT_URI = "https://tahrit.github.io/HopTopicc/";
 const STORAGE_KEY_WEBHOOK = "hoptopicc-discord-webhook";
 const STORAGE_KEY_CHANNEL = "hoptopicc-discord-channel";
 
