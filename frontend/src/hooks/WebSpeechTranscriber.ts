@@ -45,34 +45,24 @@ export class WebSpeechTranscriber implements TranscriberProvider {
     };
 
     this.recognition.onresult = (event: SpeechRecognitionEvent) => {
-      let transcript = "";
-
-      // Collect all results
+      // Emit each newly-final result individually so we don't miss any
+      // and avoid accumulating duplicates in continuous mode.
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcriptSegment = event.results[i][0].transcript;
-        transcript += transcriptSegment;
-      }
-
-      // Check if this is a final result
-      if (
-        event.results.length > 0 &&
-        event.results[event.results.length - 1].isFinal
-      ) {
-        // Final result: emit transcript message
-        const now = Date.now() / 1000;
-        if (transcript.trim()) {
-          const msg: TranscriptMessage = {
-            type: "transcript",
-            text: transcript,
-            start: segmentStartTime,
-            end: now,
-            topicId: null,
-          };
-          this.onTranscript?.(msg);
-          segmentStartTime = now;
+        if (event.results[i].isFinal) {
+          const text = event.results[i][0].transcript.trim();
+          if (text) {
+            const now = Date.now() / 1000;
+            const msg: TranscriptMessage = {
+              type: "transcript",
+              text,
+              start: segmentStartTime,
+              end: now,
+              topicId: null,
+            };
+            this.onTranscript?.(msg);
+            segmentStartTime = now;
+          }
         }
-      } else {
-        // Interim result: don't emit yet (waiting for final)
       }
     };
 
@@ -89,6 +79,8 @@ export class WebSpeechTranscriber implements TranscriberProvider {
       if (this.shouldRun && this.recognition) {
         try {
           this.recognition.start();
+          // Mark as recording again so stop() can properly halt the session.
+          this.isRecording = true;
         } catch {
           // Ignore restart race; browser may still be tearing down.
         }

@@ -133,32 +133,33 @@ function App() {
   }, [localMode]);
 
   const handleToggleRecording = useCallback(() => {
-    setIsRecording((prev) => {
-      if (prev) {
-        if (localMode) {
-          localTranscriberRef.current?.stop().catch(() => {});
-        } else {
-          // Stopping: tell backend to flush & stop
-          sendMessage({ type: "stop_recording" });
-        }
+    if (isRecording) {
+      // ── Stop ──
+      setIsRecording(false);
+      if (localMode) {
+        localTranscriberRef.current?.stop().catch(() => {});
       } else {
-        if (localMode) {
-          setMicError(null);
-          localTranscriberRef.current?.start().catch((err) => {
-            const message = err instanceof Error ? err.message : String(err);
-            setMicError(message);
-          });
-        } else {
-          // Starting: send initial topic if set
-          const topic = useConversationStore.getState().initialTopic.trim();
-          if (topic) {
-            sendMessage({ type: "set_topic", topic });
-          }
+        sendMessage({ type: "stop_recording" });
+      }
+    } else {
+      // ── Start ──
+      setIsRecording(true);
+      if (localMode) {
+        setMicError(null);
+        localTranscriberRef.current?.start().catch((err) => {
+          const message = err instanceof Error ? err.message : String(err);
+          setMicError(message);
+          setIsRecording(false);
+        });
+      } else {
+        // Starting: send initial topic if set
+        const topic = useConversationStore.getState().initialTopic.trim();
+        if (topic) {
+          sendMessage({ type: "set_topic", topic });
         }
       }
-      return !prev;
-    });
-  }, [localMode, sendMessage]);
+    }
+  }, [isRecording, localMode, sendMessage]);
 
   // OBS overlay: transparent background, only show the river diagram
   if (isOverlay) {
