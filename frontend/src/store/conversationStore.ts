@@ -64,9 +64,9 @@ interface ConversationState {
 const DEFAULT_MOOD: MoodVector = { energy: 0.5, confidence: 0.5 };
 const MAX_SEGMENTS = 500;
 
-const STORAGE_KEY_SERVER = "hoptopiic-server-url";
-const STORAGE_KEY_LOCAL_MODE = "hoptopiic-local-mode";
-const STORAGE_KEY_MIC_ID = "hoptopiic-local-mic-id";
+const STORAGE_KEY_SERVER = "hoptopicc-server-url";
+const STORAGE_KEY_LOCAL_MODE = "hoptopicc-local-mode";
+const STORAGE_KEY_MIC_ID = "hoptopicc-local-mic-id";
 
 function getDefaultServer(): string {
   return `${window.location.hostname}:8000`;

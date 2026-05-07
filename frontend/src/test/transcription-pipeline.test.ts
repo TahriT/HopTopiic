@@ -45,12 +45,12 @@ class MockSpeechRecognition extends EventTarget {
       0: { transcript: text, confidence: 0.95 },
       isFinal: true,
       length: 1,
-      item: (i: number) => ({ transcript: text, confidence: 0.95 }),
+      item: (_i: number) => ({ transcript: text, confidence: 0.95 }),
     };
     const resultList = {
       0: result,
       length: 1,
-      item: (i: number) => result,
+      item: (_i: number) => result,
     };
     this.onresult?.({
       resultIndex: 0,
@@ -64,12 +64,12 @@ class MockSpeechRecognition extends EventTarget {
       0: { transcript: text, confidence: 0.5 },
       isFinal: false,
       length: 1,
-      item: (i: number) => ({ transcript: text, confidence: 0.5 }),
+      item: (_i: number) => ({ transcript: text, confidence: 0.5 }),
     };
     const resultList = {
       0: result,
       length: 1,
-      item: (i: number) => result,
+      item: (_i: number) => result,
     };
     this.onresult?.({
       resultIndex: 0,
@@ -201,7 +201,6 @@ describe('WebSpeechTranscriber', () => {
 
 describe('Full transcription pipeline: transcriber → store', () => {
   it('adds a topic node and transcript segment to the store when speech is detected', () => {
-    const store = useConversationStore.getState();
 
     // Simulate what App.tsx does: create transcriber, wire onTranscript to store
     const transcriber = new WebSpeechTranscriber();

@@ -3,6 +3,7 @@ import { useWebSocket } from "./hooks/useWebSocket";
 import { useConversationStore } from "./store/conversationStore";
 import { useCast } from "./hooks/useCast";
 import { WebSpeechTranscriber } from "./hooks/WebSpeechTranscriber";
+import { LocalTopicInferencer } from "./hooks/LocalTopicInferencer";
 import { RiverCanvas } from "./components/RiverCanvas";
 import { TranscriptPanel } from "./components/TranscriptPanel";
 import { TimelineRuler, useElapsedTime } from "./components/TimelineRuler";
@@ -30,6 +31,7 @@ function App() {
   const [micError, setMicError] = useState<string | null>(null);
   const { isCasting, startCast, stopCast, castError } = useCast();
   const localTranscriberRef = useRef<WebSpeechTranscriber | null>(null);
+  const localInferencerRef = useRef<LocalTopicInferencer | null>(null);
 
   // OBS overlay mode: ?overlay=true hides UI chrome
   const isOverlay = useMemo(() => {
@@ -84,33 +86,67 @@ function App() {
     if (!localMode) {
       localTranscriberRef.current?.stop().catch(() => {});
       localTranscriberRef.current = null;
+      localInferencerRef.current = null;
       return;
     }
 
     try {
+      // ── Topic inferencer ──
+      const inferencer = new LocalTopicInferencer();
+      localInferencerRef.current = inferencer;
+
+      // ── Transcriber ──
       const transcriber = new WebSpeechTranscriber();
       transcriber.onTranscript = (msg) => {
         const store = useConversationStore.getState();
         const now = Date.now() / 1000;
         const sessionStart = store.sessionStartTime ?? now;
 
-        let topicId = store.activeId;
-        if (!topicId) {
+        // Ensure a root topic exists on first transcript
+        if (!store.activeId) {
+          const rootLabel = store.initialTopic.trim() || "Live Session";
           const rootId = `local-root-${Math.floor(now)}`;
           store.addTopic({
             type: "topic",
             id: rootId,
-            label: store.initialTopic.trim() || "Live Session",
+            label: rootLabel,
             timestamp: 0,
             parentId: null,
             hopDepth: 0,
             semanticDistFromRoot: 0,
             mood: { energy: 0.5, confidence: 0.5 },
           });
-          topicId = rootId;
+          inferencer.resetTopic(rootLabel);
         }
 
-        store.addTranscript({
+        // Wire topic-change callback so it fires before we pick topicId
+        inferencer.onTopicChange = ({ label, mood }) => {
+          const s = useConversationStore.getState();
+          const ts = Date.now() / 1000;
+          const sessionTs = s.sessionStartTime ?? ts;
+          const parentId = s.activeId;
+          const parentNode = parentId ? s.nodes.get(parentId) : undefined;
+          const hopDepth = (parentNode?.hopDepth ?? 0) + 1;
+          const newId = `local-topic-${Math.floor(ts * 1000)}`;
+          s.addTopic({
+            type: "topic",
+            id: newId,
+            label,
+            timestamp: Math.max(0, ts - sessionTs),
+            parentId,
+            hopDepth,
+            semanticDistFromRoot: Math.min(1, hopDepth * 0.25),
+            mood,
+          });
+          inferencer.resetTopic(label);
+        };
+
+        // Run inference — may synchronously create a new topic via the callback above
+        inferencer.ingest(msg.text, msg.start);
+
+        // Use the (possibly updated) active topic id
+        const topicId = useConversationStore.getState().activeId!;
+        useConversationStore.getState().addTranscript({
           ...msg,
           start: Math.max(0, msg.start - sessionStart),
           end: Math.max(0.1, msg.end - sessionStart),
@@ -129,6 +165,7 @@ function App() {
     return () => {
       localTranscriberRef.current?.stop().catch(() => {});
       localTranscriberRef.current = null;
+      localInferencerRef.current = null;
     };
   }, [localMode]);
 
@@ -175,7 +212,7 @@ function App() {
       {/* Header */}
       <header className="app__header">
         <h1 className="app__title">
-          <span className="app__logo">🐇</span> HopTopiic
+          <span className="app__logo">🐇</span> HopTopicc
         </h1>
         <SettingsPanel
           inputMode={inputMode}

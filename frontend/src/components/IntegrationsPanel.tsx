@@ -297,7 +297,7 @@ export function IntegrationsPanel() {
             </a>
           )}
           <span className="integrations-panel__hint">
-            In Discord use /hoptopiic_follow for updates and /hoptopiic_activity for the visual/activity link.
+            In Discord use /hoptopicc_follow for updates and /hoptopicc_activity for the visual/activity link.
           </span>
           {discordStatus && !discordStatus.appPublicUrlLikelyReachable && (
             <span className="integrations-panel__warning">

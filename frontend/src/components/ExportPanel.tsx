@@ -89,7 +89,7 @@ export function ExportPanel() {
           type: format === "ndjson" ? "text/plain" : "application/json",
         });
         const url = URL.createObjectURL(blob);
-        const filename = `hoptopiic-export-${Date.now()}.${
+        const filename = `hoptopicc-export-${Date.now()}.${
           format === "ndjson" ? "ndjson" : "json"
         }`;
 

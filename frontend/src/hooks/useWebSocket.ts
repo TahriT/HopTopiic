@@ -15,7 +15,7 @@ export function useWebSocket() {
     
     // Skip if Local Mode is enabled
     if (store.localMode) {
-      console.log("[HopTopiic] WebSocket disabled (Local Mode enabled)");
+      console.log("[HopTopicc] WebSocket disabled (Local Mode enabled)");
       return;
     }
 
@@ -36,7 +36,7 @@ export function useWebSocket() {
       ws = new WebSocket(wsUrl);
     } catch (err) {
       // HTTPS pages cannot open insecure ws:// endpoints; avoid crashing the app.
-      console.warn("[HopTopiic] WebSocket unavailable:", err);
+      console.warn("[HopTopicc] WebSocket unavailable:", err);
       store.setConnected(false);
       return;
     }
@@ -45,7 +45,7 @@ export function useWebSocket() {
 
     ws.onopen = () => {
       store.setConnected(true);
-      console.log("[HopTopiic] WebSocket connected to", wsUrl);
+      console.log("[HopTopicc] WebSocket connected to", wsUrl);
     };
 
     ws.onmessage = (ev: MessageEvent) => {
@@ -71,11 +71,11 @@ export function useWebSocket() {
             s.setInputMode(msg.inputMode);
             break;
           case "error":
-            console.error("[HopTopiic] Server error:", msg.message);
+            console.error("[HopTopicc] Server error:", msg.message);
             break;
         }
       } catch {
-        console.warn("[HopTopiic] Failed to parse WS message");
+        console.warn("[HopTopicc] Failed to parse WS message");
       }
     };
 
