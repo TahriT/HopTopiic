@@ -1,14 +1,15 @@
 /**
- * useDiscordOAuth — Discord webhook.incoming OAuth2 implicit flow.
+ * useDiscordOAuth — Discord webhook.incoming OAuth2 PKCE flow.
  *
  * Flow:
- *  1. User clicks "Connect Channel" → redirect to Discord OAuth picker
+ *  1. User clicks "Connect Channel" → generate PKCE verifier/challenge, redirect to Discord
  *  2. User selects a server + channel in Discord's UI
- *  3. Discord redirects back to the app with webhook_id + webhook_token in the URL hash
- *  4. This hook parses the hash, builds the webhook URL, fetches channel info, persists to localStorage
- *  5. Exposes postTopicHop() and postSessionStart() to post embeds to the connected channel
+ *  3. Discord redirects back with ?code=... in the query string
+ *  4. This hook exchanges the code + verifier for a token (no client secret needed)
+ *  5. The token response includes the webhook object; we persist url + name to localStorage
+ *  6. Exposes postTopicHop() and postSessionStart() to post embeds to the connected channel
  *
- * No backend or client secret required — uses the public implicit grant flow.
+ * Uses PKCE (RFC 7636) — works from a static site with no backend.
  */
 
 import { useCallback, useEffect, useState } from "react";
@@ -17,6 +18,7 @@ const DISCORD_CLIENT_ID = "1501781314326626445";
 const REDIRECT_URI = "https://tahrit.github.io/HopTopicc/";
 const STORAGE_KEY_WEBHOOK = "hoptopicc-discord-webhook";
 const STORAGE_KEY_CHANNEL = "hoptopicc-discord-channel";
+const STORAGE_KEY_PKCE = "hoptopicc-pkce-verifier";
 
 // Discord blurple colour for embeds
 const DISCORD_COLOR = 0x5865f2;
@@ -38,46 +40,58 @@ export function useDiscordOAuth() {
     }
   });
 
-  // On mount: check if Discord just redirected back with webhook credentials in the hash
+  // On mount: check if Discord redirected back with ?code=... (PKCE authorization code flow)
   useEffect(() => {
-    const hash = window.location.hash;
-    if (!hash.includes("webhook_id")) return;
+    const searchParams = new URLSearchParams(window.location.search);
+    const code = searchParams.get("code");
+    if (!code) return;
 
-    const params = new URLSearchParams(hash.slice(1)); // strip leading '#'
-    const webhookId = params.get("webhook_id");
-    const webhookToken = params.get("webhook_token");
-    if (!webhookId || !webhookToken) return;
+    const verifier = sessionStorage.getItem(STORAGE_KEY_PKCE);
+    sessionStorage.removeItem(STORAGE_KEY_PKCE);
+    if (!verifier) return;
 
-    // Clean OAuth tokens out of the URL bar immediately
-    window.history.replaceState(
-      null,
-      "",
-      window.location.pathname + window.location.search,
-    );
+    // Clean the code out of the URL bar immediately
+    window.history.replaceState(null, "", window.location.pathname);
 
-    const url = `https://discord.com/api/webhooks/${webhookId}/${webhookToken}`;
+    // Exchange authorization code + PKCE verifier for a token (no client secret required)
+    const body = new URLSearchParams({
+      client_id: DISCORD_CLIENT_ID,
+      code,
+      grant_type: "authorization_code",
+      redirect_uri: REDIRECT_URI,
+      code_verifier: verifier,
+    });
 
-    // Fetch webhook metadata to get a human-readable channel name
-    fetch(url)
+    fetch("https://discord.com/api/oauth2/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
+    })
       .then((r) => r.json())
       .then((data: any) => {
-        const channelName: string = data.name ?? "Discord channel";
+        const wh = data.webhook;
+        if (!wh) return;
+        const url: string =
+          wh.url ??
+          `https://discord.com/api/webhooks/${wh.id}/${wh.token}`;
+        const channelName: string = wh.name ?? "Discord channel";
         persist(url, channelName);
         setWebhook({ url, channelName });
       })
-      .catch(() => {
-        persist(url, "Discord channel");
-        setWebhook({ url, channelName: "Discord channel" });
-      });
+      .catch(() => {});
   }, []);
 
-  /** Open Discord's channel picker via OAuth2 implicit grant. */
-  const connect = useCallback(() => {
+  /** Open Discord's channel picker via OAuth2 PKCE authorization code flow. */
+  const connect = useCallback(async () => {
+    const { verifier, challenge } = await generatePKCE();
+    sessionStorage.setItem(STORAGE_KEY_PKCE, verifier);
     const params = new URLSearchParams({
       client_id: DISCORD_CLIENT_ID,
       redirect_uri: REDIRECT_URI,
-      response_type: "token",
+      response_type: "code",
       scope: "webhook.incoming",
+      code_challenge: challenge,
+      code_challenge_method: "S256",
     });
     window.location.href = `https://discord.com/oauth2/authorize?${params}`;
   }, []);
@@ -158,6 +172,26 @@ export function useDiscordOAuth() {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Generate a PKCE code_verifier and SHA-256 code_challenge. */
+async function generatePKCE(): Promise<{ verifier: string; challenge: string }> {
+  const array = new Uint8Array(32);
+  crypto.getRandomValues(array);
+  const verifier = base64urlEncode(array);
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(verifier),
+  );
+  const challenge = base64urlEncode(new Uint8Array(digest));
+  return { verifier, challenge };
+}
+
+function base64urlEncode(buf: Uint8Array): string {
+  return btoa(String.fromCharCode(...buf))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+}
 
 function persist(url: string, channelName: string) {
   try {
