@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+// @ts-ignore — vitest types come from the vitest package
+import type { UserConfig as VitestUserConfig } from 'vitest/config'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -21,6 +23,12 @@ if (hasCert) {
 export default defineConfig({
   base: '/HopTopiic/',
   plugins: [react()],
+  // @ts-ignore — merging vitest config
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/test/setup.ts'],
+  },
   server: {
     host: '0.0.0.0',
     ...(hasCert && {
