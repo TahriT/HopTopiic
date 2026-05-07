@@ -24,6 +24,7 @@
   background: #1e293b;
   border-bottom: 1px solid #334155;
   flex-shrink: 0;
+  position: relative;
   z-index: 10;
 }
 
@@ -41,10 +42,14 @@
 }
 
 .app__device-bar {
-  padding: 8px 16px;
-  background: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 16px;
+  background: #162032;
   border-bottom: 1px solid #334155;
   flex-shrink: 0;
+  z-index: 9;
 }
 
 .app__mic-error {

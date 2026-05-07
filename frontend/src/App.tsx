@@ -208,7 +208,7 @@ function App() {
       {localMode && (
         <div className="app__device-bar">
           <LocalMicPicker />
-          <LocalMicMeter deviceId={selectedMicId} active={!isRecording} />
+          <LocalMicMeter deviceId={selectedMicId} active={true} />
         </div>
       )}
 
